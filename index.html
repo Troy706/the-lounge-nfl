@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Lounge — 2026 NFL Predictions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --ink:#0a0a0c;
+    --panel:#15171c;
+    --panel-raised:#1c1f26;
+    --line: #2a2e37;
+    --red:#e4002b;
+    --red-dark:#a3001f;
+    --gold:#ffb81c;
+    --white:#f5f6f8;
+    --grey:#8a919e;
+    --green:#1fbf75;
+    --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+    --font-body: 'Inter', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 90px),
+      var(--ink);
+    color: var(--white);
+    font-family: var(--font-body);
+    min-height:100vh;
+  }
+
+  .football-icon{ display:inline-block; flex-shrink:0; }
+  .football-icon path{ fill: var(--gold); }
+  .football-icon .laces{ stroke:#0a0a0c; stroke-width:1.4; }
+
+  /* ---------- Yard-line ruler divider ---------- */
+  .yard-ruler{
+    position:relative;
+    height:26px;
+    background: #0d1f14;
+    background-image: linear-gradient(180deg, #123a22 0%, #0d1f14 100%);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+  }
+  .yard-ruler-track{
+    display:flex;
+    align-items:center;
+    white-space:nowrap;
+    animation: scroll-yard 40s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .yard-ruler-track{ animation:none; } }
+  .yard-mark{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:0 22px;
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color: rgba(255,255,255,0.55);
+    border-left: 1px solid rgba(255,255,255,0.18);
+  }
+  @keyframes scroll-yard{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-50%); }
+  }
+
+  /* ---------- Ticker header ---------- */
+  .ticker-bar{
+    background: var(--red);
+    background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.12) 0 18px, transparent 18px 36px);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:6px 0;
+    border-bottom:3px solid var(--ink);
+  }
+  .ticker-track{
+    display:inline-block;
+    padding-left:100%;
+    animation: scroll-ticker 26s linear infinite;
+    font-family: var(--font-display);
+    font-weight:500;
+    letter-spacing:0.04em;
+    font-size:13px;
+    color:#fff;
+  }
+  @keyframes scroll-ticker{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(-100%);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticker-track{ animation: none; padding-left: 16px; }
+  }
+
+  header.masthead{
+    background: linear-gradient(180deg, #101216 0%, var(--ink) 100%);
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid var(--line);
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .masthead-title{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(26px, 4vw, 40px);
+    line-height:0.95;
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+  }
+  .masthead-title span{ color: var(--red); }
+  .masthead-sub{
+    color:var(--grey);
+    font-size:13px;
+    margin-top:6px;
+  }
+  .btn{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    font-size:13px;
+    border:none;
+    border-radius:3px;
+    padding:10px 16px;
+    cursor:pointer;
+    transition: transform 0.08s ease, background 0.15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--red); color:#fff; }
+  .btn-primary:hover{ background: var(--red-dark); }
+  .btn-ghost{ background: var(--panel-raised); color: var(--white); border:1px solid var(--line); }
+  .btn-ghost:hover{ background:#22262f; }
+  .btn-small{ padding:6px 10px; font-size:11px; }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Player rail ---------- */
+  .rail{
+    background: var(--panel);
+    border-right:1px solid var(--line);
+    padding:18px 14px;
+    min-height:100%;
+  }
+  @media (max-width: 860px){
+    .rail{ border-right:none; border-bottom:1px solid var(--line); }
+  }
+  .rail-heading{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:12px;
+    letter-spacing:0.08em;
+    color:var(--grey);
+    margin: 4px 4px 12px;
+  }
+  .player-card{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius:4px;
+    padding:10px 12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    position:relative;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .player-card:hover{ background:#20242c; }
+  .player-card.active{ border-left-color: var(--red); background:#20242c; }
+  .player-card.rank-1{ border-left-color: var(--gold); }
+  .rank-badge{
+    font-family: var(--font-display);
+    font-size:11px;
+    font-weight:700;
+    color: var(--ink);
+    background: var(--grey);
+    width:20px; height:20px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    position:absolute;
+    top:-6px; left:-6px;
+    border:2px solid var(--panel);
+  }
+  .player-card.rank-1 .rank-badge{ background: var(--gold); }
+  .avatar{
+    width:64px; height:64px;
+    border-radius:50%;
+    background: #2a2e37;
+    background-size:cover;
+    background-position:center;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:20px;
+    color: var(--grey);
+    border:2px solid var(--line);
+    overflow:hidden;
+  }
+  .avatar input{ display:none; }
+  .player-meta{ flex:1; min-width:0; }
+  .player-name{
+    font-weight:600;
+    font-size:14px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .player-nick{
+    color: var(--grey);
+    font-size:12px;
+    font-style:italic;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .player-score{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:20px;
+    color: var(--gold);
+    text-align:right;
+    flex-shrink:0;
+  }
+  .player-score small{
+    display:block;
+    font-family: var(--font-body);
+    font-weight:500;
+    font-size:9px;
+    color: var(--grey);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .player-remove{
+    position:absolute;
+    top:4px; right:4px;
+    background:none; border:none;
+    color: var(--grey);
+    font-size:14px;
+    cursor:pointer;
+    padding:2px 6px;
+    line-height:1;
+    opacity:0;
+    transition:opacity 0.15s ease;
+  }
+  .player-card:hover .player-remove{ opacity:1; }
+  .player-remove:hover{ color: var(--red); }
+
+  .add-player-btn{
+    width:100%;
+    background:transparent;
+    border:1.5px dashed var(--line);
+    color: var(--grey);
+    border-radius:4px;
+    padding:12px;
+    font-family: var(--font-display);
+    text-transform:uppercase;
+    font-size:12px;
+    letter-spacing:0.04em;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .add-player-btn:hover{ border-color: var(--red); color: var(--white); }
+
+  /* ---------- Main panel ---------- */
+  .main{ padding:20px; }
+  .main-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .section-title{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:18px;
+    letter-spacing:0.02em;
+  }
+  .filter-row{
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  select, input[type=text], input[type=number], textarea{
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    color: var(--white);
+    padding:8px 10px;
+    border-radius:3px;
+    font-family: var(--font-body);
+    font-size:13px;
+  }
+  select:focus, input:focus, textarea:focus{ outline:1px solid var(--red); }
+  .pred-text-input{
+    width:100%;
+    resize:none;
+    overflow:hidden;
+    line-height:1.4;
+    min-height:34px;
+  }
+
+  /* Add prediction form */
+  .add-form{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:16px;
+    margin-bottom:22px;
+  }
+  .add-form-title{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:13px;
+    letter-spacing:0.05em;
+    color: var(--grey);
+    margin-bottom:12px;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns: 1fr 90px 1.6fr 130px 90px auto;
+    gap:10px;
+    align-items:end;
+  }
+  @media (max-width: 720px){
+    .form-grid{ grid-template-columns: 1fr 1fr; }
+  }
+  .field label{
+    display:block;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--grey);
+    margin-bottom:4px;
+  }
+  .field select, .field input{ width:100%; }
+
+  /* Predictions table */
+  .pred-table-wrap{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left;
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:0.06em;
+    color: var(--grey);
+    background: var(--panel-raised);
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:#191c22; }
+
+  /* Stack the predictions table into cards on narrow screens */
+  @media (max-width: 700px){
+    .pred-table-wrap table, .pred-table-wrap thead, .pred-table-wrap tbody,
+    .pred-table-wrap th, .pred-table-wrap td, .pred-table-wrap tr{
+      display:block;
+    }
+    .pred-table-wrap thead{ display:none; }
+    .pred-table-wrap tbody tr{
+      border-bottom:6px solid var(--ink);
+      padding:12px 12px 4px;
+    }
+    .pred-table-wrap tbody td{
+      border-bottom:none;
+      padding:8px 0;
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .pred-table-wrap tbody td::before{
+      content: attr(data-label);
+      flex-shrink:0;
+      width:78px;
+      padding-top:8px;
+      font-family: var(--font-display);
+      font-weight:600;
+      text-transform:uppercase;
+      font-size:10px;
+      letter-spacing:0.06em;
+      color: var(--grey);
+    }
+    .pred-table-wrap tbody td[data-label=""]::before{ display:none; width:0; }
+    .pred-table-wrap tbody td[data-label=""]{ justify-content:flex-end; }
+  }
+
+  .cell-player{ display:flex; align-items:center; gap:8px; white-space:nowrap; }
+  .cell-avatar{
+    width:36px; height:36px; border-radius:50%;
+    background:#2a2e37; background-size:cover; background-position:center;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:var(--grey);
+    font-family: var(--font-display);
+  }
+  .week-chip{
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:11px;
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    padding:3px 8px;
+    border-radius:3px;
+    white-space:nowrap;
+  }
+  .result-select{ font-family: var(--font-display); font-weight:600; font-size:12px; text-transform:uppercase; }
+  .result-select.pending{ color: var(--grey); }
+  .result-select.correct{ color: var(--green); }
+  .result-select.incorrect{ color: var(--red); }
+  .pts-input{ width:56px; text-align:center; }
+  .row-remove{
+    background:none; border:none; color:var(--grey); cursor:pointer; font-size:16px; padding:4px 8px;
+  }
+  .row-remove:hover{ color: var(--red); }
+  .empty-state{
+    padding:40px 20px;
+    text-align:center;
+    color: var(--grey);
+    font-size:14px;
+  }
+  .empty-state strong{ display:block; color:var(--white); font-family:var(--font-display); font-size:16px; text-transform:uppercase; margin-bottom:6px; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background: rgba(0,0,0,0.65);
+    display:flex; align-items:center; justify-content:center;
+    z-index:10000;
+    padding:16px;
+  }
+  .modal-box{
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-top:3px solid var(--red);
+    border-radius:6px;
+    padding:22px;
+    width:100%;
+    max-width:360px;
+  }
+  .modal-title{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:15px;
+    margin-bottom:14px;
+  }
+  .modal-message{ font-size:13px; color:var(--white); line-height:1.5; margin-bottom:18px; }
+  .modal-field{ margin-bottom:12px; }
+  .modal-field label{
+    display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.06em;
+    color: var(--grey); margin-bottom:4px;
+  }
+  .modal-field input{ width:100%; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+
+  /* ---------- Status banner ---------- */
+  .status-banner{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:10001;
+    padding:10px 16px;
+    font-size:13px;
+    font-family: var(--font-body);
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .status-banner.error{ background: var(--red-dark); color:#fff; }
+  .status-banner.warn{ background: #4a3a0a; color: var(--gold); border-bottom:1px solid var(--gold); }
+  .status-banner button{
+    background:none; border:none; color:inherit; font-size:16px; cursor:pointer; line-height:1;
+  }
+
+  .sync-note{
+    font-size:11px;
+    color: var(--grey);
+    display:flex; align-items:center; gap:6px;
+    margin-top:10px;
+  }
+  .sync-dot{ width:6px; height:6px; border-radius:50%; background: var(--green); flex-shrink:0; }
+
+  /* ---------- Champion banner ---------- */
+  .trophy-banner{
+    background: linear-gradient(135deg, #241a06 0%, #1c1408 60%, #15171c 100%);
+    border:1px solid var(--gold);
+    border-radius:8px;
+    padding:22px 24px;
+    margin-bottom:22px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .trophy-banner svg{ flex-shrink:0; }
+  .trophy-copy{ flex:1; min-width:200px; }
+  .trophy-eyebrow{
+    font-family: var(--font-display);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.12em;
+    color: var(--gold);
+    margin-bottom:4px;
+  }
+  .trophy-name{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(22px, 3vw, 30px);
+    text-transform:uppercase;
+    line-height:1.05;
+  }
+  .trophy-meta{ color: var(--grey); font-size:13px; margin-top:4px; }
+
+  .locked-section{
+    opacity:0.45;
+    pointer-events:none;
+    filter: grayscale(0.3);
+  }
+
+  /* ---------- Podium leaderboard ---------- */
+  .podium-wrap{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px;
+    margin-bottom:22px;
+  }
+  .podium-title{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:13px;
+    letter-spacing:0.06em;
+    color: var(--grey);
+    margin-bottom:16px;
+  }
+  .podium-row{
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .podium-slot{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:120px;
+  }
+  .podium-avatar{
+    width:72px; height:72px;
+    border-radius:50%;
+    background:#2a2e37;
+    background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-weight:700; font-size:22px; color:var(--grey);
+    border:3px solid var(--line);
+    margin-bottom:8px;
+  }
+  .podium-slot.p1 .podium-avatar{ border-color: var(--gold); width:88px; height:88px; font-size:26px; }
+  .podium-slot.p2 .podium-avatar{ border-color:#c7c9cd; }
+  .podium-slot.p3 .podium-avatar{ border-color:#c68a4e; }
+  .podium-medal{ font-size:22px; margin-bottom:4px; }
+  .podium-name{ font-weight:600; font-size:13px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+  .podium-score{ font-family: var(--font-display); font-weight:700; color: var(--gold); font-size:15px; margin-top:2px; }
+  .podium-bar{
+    width:100%;
+    margin-top:10px;
+    border-radius:4px 4px 0 0;
+    background: linear-gradient(180deg, var(--panel-raised), #23262e);
+    border:1px solid var(--line);
+    border-bottom:none;
+    display:flex; align-items:flex-start; justify-content:center;
+    font-family: var(--font-display); font-weight:700; color: var(--grey); font-size:12px;
+    padding-top:6px;
+  }
+  .podium-slot.p1 .podium-bar{ height:70px; border-color: var(--gold); }
+  .podium-slot.p2 .podium-bar{ height:48px; }
+  .podium-slot.p3 .podium-bar{ height:32px; }
+  .streak-badge{
+    display:inline-flex; align-items:center; gap:2px;
+    font-size:11px;
+    padding:1px 6px;
+    border-radius:10px;
+    margin-left:6px;
+    font-family: var(--font-body); font-weight:600;
+  }
+  .streak-hot{ background: rgba(255,184,28,0.15); color: var(--gold); }
+  .streak-cold{ background: rgba(228,0,43,0.15); color: var(--red); }
+
+  /* ---------- Reactions ---------- */
+  .reactions{ display:flex; gap:4px; }
+  .reaction-btn{
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-radius:12px;
+    font-size:12px;
+    padding:2px 7px;
+    cursor:pointer;
+    color: var(--white);
+    display:flex; align-items:center; gap:3px;
+  }
+  .reaction-btn:hover{ border-color: var(--gold); }
+  .reaction-count{ font-size:10px; color: var(--grey); }
+
+  /* ---------- Confetti ---------- */
+  .confetti-piece{
+    position:fixed;
+    top:-20px;
+    width:8px; height:14px;
+    z-index:9999;
+    pointer-events:none;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall{
+    to{ transform: translateY(105vh) rotate(540deg); opacity:0.9; }
+  }
+
+  ::-webkit-scrollbar{ height:8px; width:8px; }
+  ::-webkit-scrollbar-thumb{ background: var(--line); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<div class="ticker-bar">
+  <div class="ticker-track" id="tickerTrack">LOADING PREDICTIONS TRACKER &nbsp;&nbsp;•&nbsp;&nbsp; 2026 NFL SEASON &nbsp;&nbsp;•&nbsp;&nbsp;</div>
+</div>
+
+<header class="masthead">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <svg class="football-icon" width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 20c0-7 6-13 14-13s14 6 14 13-6 13-14 13S6 27 6 20z" fill="#8a4a2b"/>
+      <path d="M6 20c0-7 6-13 14-13s14 6 14 13-6 13-14 13S6 27 6 20z" fill="none" stroke="#5c2f18" stroke-width="1.2"/>
+      <line class="laces" x1="14" y1="20" x2="26" y2="20"/>
+      <line class="laces" x1="17" y1="17.5" x2="17" y2="22.5"/>
+      <line class="laces" x1="20" y1="16.5" x2="20" y2="23.5"/>
+      <line class="laces" x1="23" y1="17.5" x2="23" y2="22.5"/>
+    </svg>
+    <div>
+      <div class="masthead-title">THE <span>LOUNGE</span></div>
+      <div class="masthead-sub">2026 NFL Predictions &middot; Everyone can add, edit, and grade picks</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" id="finishBtn">Finish season &amp; crown champion</button>
+  <button class="btn btn-ghost" id="resetBtn">Reset all data</button>
+</header>
+
+<div class="yard-ruler">
+  <div class="yard-ruler-track" id="yardTrack"></div>
+</div>
+
+<div class="layout">
+  <aside class="rail">
+    <div class="rail-heading" style="display:flex; align-items:center; gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <path d="M6 20c0-7 6-13 14-13s14 6 14 13-6 13-14 13S6 27 6 20z" fill="#8a919e"/>
+      </svg>
+      Leaderboard
+    </div>
+    <div id="playerList"></div>
+    <button class="add-player-btn" id="addPlayerBtn">+ Add player</button>
+  </aside>
+
+  <main class="main">
+    <div id="trophyBanner" style="display:none;"></div>
+
+    <div class="podium-wrap" id="podiumWrap"></div>
+
+    <div class="add-form" id="addFormSection">
+      <div class="add-form-title">Add a prediction</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Player</label>
+          <select id="formPlayer"></select>
+        </div>
+        <div class="field">
+          <label>Week</label>
+          <select id="formWeek"></select>
+        </div>
+        <div class="field">
+          <label>Prediction</label>
+          <input type="text" id="formText" placeholder="e.g. Bills win the AFC East">
+        </div>
+        <div class="field">
+          <label>Result</label>
+          <select id="formResult">
+            <option value="pending">Pending</option>
+            <option value="correct">Correct</option>
+            <option value="incorrect">Incorrect</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Points</label>
+          <input type="number" id="formPoints" value="1" min="0" step="1">
+        </div>
+        <div class="field">
+          <button class="btn btn-primary" id="addPredBtn" style="width:100%;">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-toolbar">
+      <div class="section-title" style="display:flex; align-items:center; gap:8px;">
+      <svg width="16" height="20" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <line x1="12" y1="2" x2="12" y2="30" stroke="var(--grey)" stroke-width="2"/>
+        <line x1="2" y1="2" x2="22" y2="2" stroke="var(--grey)" stroke-width="2"/>
+        <line x1="2" y1="2" x2="2" y2="9" stroke="var(--grey)" stroke-width="2"/>
+        <line x1="22" y1="2" x2="22" y2="9" stroke="var(--grey)" stroke-width="2"/>
+      </svg>
+      All predictions
+    </div>
+      <div class="filter-row">
+        <select id="filterPlayer"><option value="all">All players</option></select>
+        <select id="filterWeek"><option value="all">All weeks</option></select>
+      </div>
+    </div>
+
+    <div class="pred-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Week</th>
+            <th>Player</th>
+            <th>Prediction</th>
+            <th>Result</th>
+            <th>Pts</th>
+            <th>React</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="predTableBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <strong>No predictions yet</strong>
+        Add a player on the left, then log the first prediction above.
+      </div>
+    </div>
+    <div class="sync-note"><span class="sync-dot"></span> Synced live for everyone with the link &mdash; no login needed, changes show up for the whole group instantly.</div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:none;">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<div class="status-banner" id="statusBanner">
+  <span id="statusBannerText"></span>
+  <button id="statusBannerClose">✕</button>
+</div>
+
+<script>
+const WEEKS = ['Preseason', ...Array.from({length:18}, (_,i)=>'Week '+(i+1)), 'Wild Card', 'Divisional', 'Conf. Championship', 'Super Bowl'];
+
+let players = [];
+let predictions = [];
+let season = { finished: false, winnerIds: [], finishedAt: null };
+let activePlayerFilter = 'all';
+
+const $ = (id) => document.getElementById(id);
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function showBanner(message, type){
+  const banner = $('statusBanner');
+  banner.className = 'status-banner ' + (type || 'error');
+  banner.style.display = 'flex';
+  $('statusBannerText').textContent = message;
+}
+$('statusBannerClose').addEventListener('click', () => { $('statusBanner').style.display = 'none'; });
+
+function closeModal(){
+  $('modalOverlay').style.display = 'none';
+  $('modalBox').innerHTML = '';
+}
+
+function confirmModal(title, message, confirmLabel){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">${escapeHtml(title)}</div>
+      <div class="modal-message">${escapeHtml(message)}</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalConfirm">${escapeHtml(confirmLabel || 'Confirm')}</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(false); });
+    $('modalConfirm').addEventListener('click', () => { closeModal(); resolve(true); });
+  });
+}
+
+function addPlayerModal(){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">Add player</div>
+      <div class="modal-field">
+        <label>Name</label>
+        <input type="text" id="modalPlayerName" placeholder="e.g. Marcus" autofocus>
+      </div>
+      <div class="modal-field">
+        <label>Nickname (optional)</label>
+        <input type="text" id="modalPlayerNick" placeholder="e.g. The Oracle">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalSave">Add player</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    const nameInput = $('modalPlayerName');
+    nameInput.focus();
+    const submit = () => {
+      const name = nameInput.value.trim();
+      const nickname = $('modalPlayerNick').value.trim();
+      if(!name) { nameInput.focus(); return; }
+      closeModal();
+      resolve({ name, nickname });
+    };
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(null); });
+    $('modalSave').addEventListener('click', submit);
+    nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') submit(); });
+    $('modalPlayerNick').addEventListener('keydown', (e) => { if(e.key === 'Enter') submit(); });
+  });
+}
+
+function initials(name){
+  return (name || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()).join('');
+}
+
+function autoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ====== FIREBASE SETUP ======
+// Paste the config object from your Firebase project's web app registration here.
+// (Project settings > General > Your apps > the </> web icon > Register app)
+const firebaseConfig = {
+  apiKey: "AIzaSyBr8bp52QkZ0VgBnAxwA4EYnzw3ZtTDJCQ",
+  authDomain: "the-lounge-nfl-predictions.firebaseapp.com",
+  databaseURL: "https://the-lounge-nfl-predictions-default-rtdb.firebaseio.com",
+  projectId: "the-lounge-nfl-predictions",
+  storageBucket: "the-lounge-nfl-predictions.firebasestorage.app",
+  messagingSenderId: "728931934835",
+  appId: "1:728931934835:web:ac97df4d68e7bd901f8006"
+};
+
+let db = null;
+let firebaseReady = false;
+
+function arrayToObj(arr){
+  return (arr || []).reduce((acc, item) => { acc[item.id] = item; return acc; }, {});
+}
+function objToArray(obj){
+  return obj ? Object.values(obj) : [];
+}
+
+function initFirebase(){
+  if(!firebaseConfig.apiKey || firebaseConfig.apiKey.indexOf('PASTE_') === 0){
+    showBanner('Setup needed: paste your Firebase config into the firebaseConfig object near the top of the script, then reload.', 'warn');
+    return false;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    firebaseReady = true;
+    return true;
+  }catch(e){
+    showBanner('Could not connect to the database: ' + (e && e.message ? e.message : 'unknown error'), 'error');
+    return false;
+  }
+}
+
+function attachListeners(){
+  db.ref('players').on('value',
+    (snap) => { players = objToArray(snap.val()); render(); },
+    (err) => showBanner('Players sync error: ' + err.message, 'error')
+  );
+  db.ref('predictions').on('value',
+    (snap) => { predictions = objToArray(snap.val()); render(); },
+    (err) => showBanner('Predictions sync error: ' + err.message, 'error')
+  );
+  db.ref('season').on('value',
+    (snap) => { season = snap.val() || { finished:false, winnerIds:[], finishedAt:null }; render(); },
+    (err) => showBanner('Season sync error: ' + err.message, 'error')
+  );
+}
+
+async function savePlayers(){
+  if(!firebaseReady) return;
+  try{ await db.ref('players').set(arrayToObj(players)); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+async function savePredictions(){
+  if(!firebaseReady) return;
+  try{ await db.ref('predictions').set(arrayToObj(predictions)); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+async function saveSeason(){
+  if(!firebaseReady) return;
+  try{ await db.ref('season').set(season); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+
+function scoreFor(playerId){
+  return predictions
+    .filter(p => p.playerId === playerId && p.result === 'correct')
+    .reduce((sum, p) => sum + (Number(p.points) || 0), 0);
+}
+
+function getStreak(playerId){
+  const rows = predictions.filter(p => p.playerId === playerId && p.result !== 'pending');
+  let count = 0, type = null;
+  for(let i = rows.length - 1; i >= 0; i--){
+    const r = rows[i].result;
+    if(type === null){ type = r; count = 1; }
+    else if(r === type){ count++; }
+    else break;
+  }
+  if(count >= 3) return { type, count };
+  return null;
+}
+
+function streakBadgeHtml(playerId){
+  const streak = getStreak(playerId);
+  if(!streak) return '';
+  if(streak.type === 'correct') return `<span class="streak-badge streak-hot">🔥 ${streak.count}</span>`;
+  return `<span class="streak-badge streak-cold">🥶 ${streak.count}</span>`;
+}
+
+function renderTicker(){
+  const sep = '  \uD83C\uDFC8  ';
+  if(players.length === 0){
+    $('tickerTrack').textContent = `WELCOME TO THE LOUNGE${sep}ADD YOUR GROUP TO GET STARTED${sep}2026 NFL SEASON${sep}`;
+    return;
+  }
+  const ranked = [...players].sort((a,b)=>scoreFor(b.id)-scoreFor(a.id));
+  const leader = ranked[0];
+  const parts = ranked.map(p => `${p.nickname || p.name}: ${scoreFor(p.id)} PTS`);
+  const lead = season.finished
+    ? `\uD83C\uDFC6 SEASON CHAMPION: ${players.filter(p=>season.winnerIds.includes(p.id)).map(w=>(w.nickname||w.name).toUpperCase()).join(' & ')}`
+    : `LEADING THE PACK: ${(leader.nickname || leader.name).toUpperCase()}`;
+  $('tickerTrack').textContent =
+    `THE LOUNGE${sep}${lead}${sep}` +
+    parts.join(sep) + sep;
+}
+
+function renderYardRuler(){
+  const sequence = ['G','10','20','30','40','50','40','30','20','10','G'];
+  const marks = sequence.map(n => `<span class="yard-mark">${n === 'G' ? 'GOAL' : n}</span>`).join('');
+  $('yardTrack').innerHTML = marks + marks;
+}
+
+function renderPlayerOptions(){
+  const formSel = $('formPlayer');
+  const filterSel = $('filterPlayer');
+  formSel.innerHTML = players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  filterSel.innerHTML = '<option value="all">All players</option>' +
+    players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  filterSel.value = activePlayerFilter;
+}
+
+function renderWeekOptions(){
+  $('formWeek').innerHTML = WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
+  $('filterWeek').innerHTML = '<option value="all">All weeks</option>' +
+    WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
+}
+
+function renderPlayers(){
+  const ranked = [...players].sort((a,b)=>scoreFor(b.id)-scoreFor(a.id));
+  const list = $('playerList');
+  if(ranked.length === 0){
+    list.innerHTML = `<div style="color:var(--grey); font-size:13px; padding:8px 4px;">No players yet. Add everyone in the group to start tracking picks.</div>`;
+    return;
+  }
+  list.innerHTML = ranked.map((p, idx) => {
+    const score = scoreFor(p.id);
+    const rankClass = idx === 0 && score > 0 ? 'rank-1' : '';
+    const activeClass = activePlayerFilter === p.id ? 'active' : '';
+    const avatarContent = p.photo
+      ? `style="background-image:url('${p.photo}')"`
+      : '';
+    return `
+      <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
+        <div class="rank-badge">${idx+1}</div>
+        <label class="avatar" ${avatarContent} title="Click to change photo">
+          ${p.photo ? '' : initials(p.name)}
+          <input type="file" accept="image/*" data-photo-for="${p.id}">
+        </label>
+        <div class="player-meta">
+          <div class="player-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
+          <div class="player-nick">${p.nickname ? '"'+escapeHtml(p.nickname)+'"' : ''}</div>
+        </div>
+        <div class="player-score">${score}<small>PTS</small></div>
+        <button class="player-remove" data-remove-player="${p.id}" title="Remove player">✕</button>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.player-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('[data-remove-player]') || e.target.closest('.avatar')) return;
+      const id = card.dataset.id;
+      activePlayerFilter = activePlayerFilter === id ? 'all' : id;
+      $('filterPlayer').value = activePlayerFilter;
+      renderPlayers();
+      renderPredictions();
+    });
+  });
+  list.querySelectorAll('[data-remove-player]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.removePlayer;
+      const p = players.find(x=>x.id===id);
+      const ok = await confirmModal('Remove player', `Remove ${p ? p.name : 'this player'} and all their predictions? This can't be undone.`, 'Remove');
+      if(!ok) return;
+      players = players.filter(x => x.id !== id);
+      predictions = predictions.filter(x => x.playerId !== id);
+      if(activePlayerFilter === id) activePlayerFilter = 'all';
+      await savePlayers();
+      await savePredictions();
+      render();
+    });
+  });
+  list.querySelectorAll('[data-photo-for]').forEach(input => {
+    input.addEventListener('change', (e) => handlePhotoUpload(e, input.dataset.photoFor));
+  });
+}
+
+function handlePhotoUpload(e, playerId){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const img = new Image();
+    img.onload = async () => {
+      const size = 160;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const minDim = Math.min(img.width, img.height);
+      const sx = (img.width - minDim) / 2;
+      const sy = (img.height - minDim) / 2;
+      ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      const p = players.find(x => x.id === playerId);
+      if(p){ p.photo = dataUrl; }
+      await savePlayers();
+      render();
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPredictions(){
+  const weekFilter = $('filterWeek').value;
+  let rows = [...predictions];
+  if(activePlayerFilter !== 'all') rows = rows.filter(p => p.playerId === activePlayerFilter);
+  if(weekFilter !== 'all') rows = rows.filter(p => p.week === weekFilter);
+
+  const weekIndex = w => WEEKS.indexOf(w);
+  rows.sort((a,b) => weekIndex(b.week) - weekIndex(a.week));
+
+  const body = $('predTableBody');
+  const empty = $('emptyState');
+  if(rows.length === 0){
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  body.innerHTML = rows.map(row => {
+    const player = players.find(p => p.id === row.playerId);
+    const avatarStyle = player && player.photo ? `style="background-image:url('${player.photo}')"` : '';
+    return `
+      <tr data-pred-id="${row.id}">
+        <td data-label="Week"><span class="week-chip">${row.week}</span></td>
+        <td data-label="Player">
+          <div class="cell-player">
+            <div class="cell-avatar" ${avatarStyle}>${player && player.photo ? '' : initials(player ? player.name : '?')}</div>
+            ${player ? escapeHtml(player.name) : '<em style="color:var(--grey)">Removed</em>'}
+          </div>
+        </td>
+        <td data-label="Prediction">
+          <textarea class="pred-text-input" rows="1">${escapeHtml(row.text)}</textarea>
+        </td>
+        <td data-label="Result">
+          <select class="result-select ${row.result}">
+            <option value="pending" ${row.result==='pending'?'selected':''}>Pending</option>
+            <option value="correct" ${row.result==='correct'?'selected':''}>Correct</option>
+            <option value="incorrect" ${row.result==='incorrect'?'selected':''}>Incorrect</option>
+          </select>
+        </td>
+        <td data-label="Pts"><input type="number" class="pts-input" value="${row.points}" min="0" step="1"></td>
+        <td data-label="React">
+          <div class="reactions">
+            <button class="reaction-btn" data-reaction="fire">🔥 <span class="reaction-count">${(row.reactions && row.reactions.fire) || 0}</span></button>
+            <button class="reaction-btn" data-reaction="skull">💀 <span class="reaction-count">${(row.reactions && row.reactions.skull) || 0}</span></button>
+            <button class="reaction-btn" data-reaction="clap">👏 <span class="reaction-count">${(row.reactions && row.reactions.clap) || 0}</span></button>
+          </div>
+        </td>
+        <td data-label=""><button class="row-remove" title="Delete prediction">✕</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  body.querySelectorAll('.pred-text-input').forEach(ta => {
+    autoGrow(ta);
+    ta.addEventListener('input', () => autoGrow(ta));
+  });
+
+  body.querySelectorAll('tr').forEach(tr => {
+    const id = tr.dataset.predId;
+    const row = predictions.find(p => p.id === id);
+    tr.querySelector('.pred-text-input').addEventListener('change', async (e) => {
+      row.text = e.target.value; await savePredictions();
+    });
+    const resultSel = tr.querySelector('.result-select');
+    resultSel.addEventListener('change', async (e) => {
+      row.result = e.target.value;
+      resultSel.className = 'result-select ' + row.result;
+      await savePredictions();
+      renderPlayers(); renderTicker();
+    });
+    tr.querySelector('.pts-input').addEventListener('change', async (e) => {
+      row.points = Number(e.target.value) || 0;
+      await savePredictions();
+      renderPlayers(); renderTicker();
+    });
+    tr.querySelector('.row-remove').addEventListener('click', async () => {
+      predictions = predictions.filter(p => p.id !== id);
+      await savePredictions();
+      render();
+    });
+    tr.querySelectorAll('.reaction-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.reaction;
+        if(!row.reactions) row.reactions = { fire:0, skull:0, clap:0 };
+        row.reactions[key] = (row.reactions[key] || 0) + 1;
+        await savePredictions();
+        renderPredictions();
+      });
+    });
+  });
+}
+
+function renderPodium(){
+  const wrap = $('podiumWrap');
+  if(players.length === 0){
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  const ranked = [...players].sort((a,b) => scoreFor(b.id) - scoreFor(a.id)).slice(0,3);
+  const medals = ['🥇','🥈','🥉'];
+  const order = ranked.length === 3 ? [1,0,2] : ranked.map((_,i)=>i);
+  const slotClass = ['p2','p1','p3'];
+  wrap.innerHTML = `<div class="podium-title">Leaderboard</div><div class="podium-row">` +
+    order.map((rankIdx, visualIdx) => {
+      const p = ranked[rankIdx];
+      if(!p) return '';
+      const cls = ranked.length === 3 ? slotClass[visualIdx] : 'p' + (rankIdx+1);
+      const avatarStyle = p.photo ? `style="background-image:url('${p.photo}')"` : '';
+      return `
+        <div class="podium-slot ${cls}">
+          <div class="podium-medal">${medals[rankIdx]}</div>
+          <div class="podium-avatar" ${avatarStyle}>${p.photo ? '' : initials(p.name)}</div>
+          <div class="podium-name">${escapeHtml(p.nickname || p.name)}${streakBadgeHtml(p.id)}</div>
+          <div class="podium-score">${scoreFor(p.id)} pts</div>
+          <div class="podium-bar">#${rankIdx+1}</div>
+        </div>
+      `;
+    }).join('') + `</div>`;
+}
+
+function fireConfetti(){
+  const colors = ['#e4002b', '#ffb81c', '#ffffff', '#1fbf75'];
+  for(let i = 0; i < 90; i++){
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    el.style.opacity = 0.7 + Math.random() * 0.3;
+    el.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+function renderTrophyBanner(){
+  const banner = $('trophyBanner');
+  if(!season.finished || players.length === 0){
+    banner.style.display = 'none';
+    return;
+  }
+  const winners = players.filter(p => season.winnerIds.includes(p.id));
+  if(winners.length === 0){ banner.style.display = 'none'; return; }
+  const score = scoreFor(winners[0].id);
+  const names = winners.map(w => w.nickname || w.name).join(' & ');
+  const dateStr = season.finishedAt ? new Date(season.finishedAt).toLocaleDateString(undefined, {month:'long', day:'numeric', year:'numeric'}) : '';
+  banner.style.display = 'flex';
+  banner.className = 'trophy-banner';
+  banner.innerHTML = `
+    <svg width="56" height="56" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 10h24v14c0 8-6 14-12 14s-12-6-12-14V10z" fill="var(--gold)"/>
+      <path d="M20 12h-8c0 8 4 13 9 14" stroke="var(--gold)" stroke-width="3" fill="none"/>
+      <path d="M44 12h8c0 8-4 13-9 14" stroke="var(--gold)" stroke-width="3" fill="none"/>
+      <rect x="28" y="38" width="8" height="8" fill="var(--gold)"/>
+      <rect x="22" y="46" width="20" height="6" rx="1" fill="var(--gold)"/>
+      <rect x="18" y="52" width="28" height="5" rx="1" fill="var(--gold)"/>
+    </svg>
+    <div class="trophy-copy">
+      <div class="trophy-eyebrow">${winners.length > 1 ? 'SEASON CO-CHAMPIONS' : 'SEASON CHAMPION'}</div>
+      <div class="trophy-name">${escapeHtml(names)}</div>
+      <div class="trophy-meta">Final score: ${score} pts ${dateStr ? '&middot; Crowned ' + dateStr : ''}</div>
+    </div>
+    <button class="btn btn-ghost btn-small" id="reopenBtn">Reopen season</button>
+  `;
+  $('reopenBtn').addEventListener('click', async () => {
+    const ok = await confirmModal('Reopen season', 'This unlocks editing again and removes the champion banner. Continue?', 'Reopen');
+    if(!ok) return;
+    season = { finished:false, winnerIds:[], finishedAt:null };
+    await saveSeason();
+    render();
+  });
+}
+
+function applyLockState(){
+  $('addFormSection').classList.toggle('locked-section', season.finished);
+  $('finishBtn').style.display = season.finished ? 'none' : 'inline-block';
+  document.querySelectorAll('.pred-table-wrap input, .pred-table-wrap select, .pred-table-wrap .row-remove')
+    .forEach(el => { el.disabled = !!season.finished; el.style.opacity = season.finished ? 0.5 : 1; });
+  document.querySelectorAll('.player-remove, .add-player-btn')
+    .forEach(el => { el.style.display = season.finished ? 'none' : ''; });
+}
+
+$('finishBtn').addEventListener('click', async () => {
+  if(players.length === 0){ await confirmModal('Can\'t finish yet', 'Add players and predictions before finishing the season.', 'OK'); return; }
+  const ranked = [...players].sort((a,b) => scoreFor(b.id) - scoreFor(a.id));
+  const topScore = scoreFor(ranked[0].id);
+  const winners = ranked.filter(p => scoreFor(p.id) === topScore);
+  const label = winners.map(w => w.nickname || w.name).join(' & ');
+  const ok = await confirmModal('Finish season', `Lock in final scores and crown ${label} (${topScore} pts) as champion${winners.length>1?'s':''}?`, 'Crown champion');
+  if(!ok) return;
+  season = { finished:true, winnerIds: winners.map(w=>w.id), finishedAt: Date.now() };
+  await saveSeason();
+  render();
+  fireConfetti();
+});
+
+function escapeHtml(str){
+  return (str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(str){ return escapeHtml(str).replace(/`/g, '&#96;'); }
+
+function render(){
+  renderPlayerOptions();
+  renderWeekOptions();
+  renderPlayers();
+  renderPredictions();
+  renderTicker();
+  renderYardRuler();
+  renderTrophyBanner();
+  renderPodium();
+  applyLockState();
+}
+
+$('addPlayerBtn').addEventListener('click', async () => {
+  const result = await addPlayerModal();
+  if(!result) return;
+  players.push({ id: uid(), name: result.name, nickname: result.nickname, photo: null });
+  await savePlayers();
+  render();
+});
+
+$('addPredBtn').addEventListener('click', async () => {
+  const playerId = $('formPlayer').value;
+  const week = $('formWeek').value;
+  const text = $('formText').value.trim();
+  const result = $('formResult').value;
+  const points = Number($('formPoints').value) || 0;
+  if(!playerId){ await confirmModal('Add a player first', 'You need at least one player before logging a prediction.', 'OK'); return; }
+  if(!text){ await confirmModal('Missing prediction', 'Enter what the prediction is before adding it.', 'OK'); return; }
+  predictions.push({ id: uid(), playerId, week, text, result, points });
+  $('formText').value = '';
+  await savePredictions();
+  renderPlayers(); renderPredictions(); renderTicker();
+});
+
+$('filterPlayer').addEventListener('change', (e) => {
+  activePlayerFilter = e.target.value;
+  renderPlayers();
+  renderPredictions();
+});
+$('filterWeek').addEventListener('change', renderPredictions);
+
+$('resetBtn').addEventListener('click', async () => {
+  const ok = await confirmModal('Reset all data', 'This clears all players and predictions for the whole group. This can\'t be undone. Continue?', 'Reset everything');
+  if(!ok) return;
+  players = [];
+  predictions = [];
+  await savePlayers();
+  await savePredictions();
+  render();
+});
+
+if(initFirebase()){
+  attachListeners();
+} else {
+  render();
+}
+</script>
+
+</body>
+</html>
