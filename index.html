@@ -221,6 +221,11 @@
     overflow:hidden;
   }
   .avatar input{ display:none; }
+  .avatar-ai{
+    border-color: #4fd1ff !important;
+    box-shadow: 0 0 0 2px rgba(79,209,255,0.25), 0 0 12px rgba(79,209,255,0.35);
+    font-size:22px !important;
+  }
   .player-meta{ flex:1; min-width:0; }
   .player-name{
     font-weight:600;
@@ -354,6 +359,18 @@
     margin-bottom:4px;
   }
   .field select, .field input{ width:100%; }
+
+  .ai-form{ border-color: rgba(79,209,255,0.35); }
+  .ai-form .add-form-title{ color: #4fd1ff; }
+  .ai-form-grid{
+    display:flex;
+    gap:10px;
+    align-items:end;
+    flex-wrap:wrap;
+  }
+  .ai-form-grid .field:first-child{ width:150px; flex-shrink:0; }
+  .ai-form-grid .field:last-child{ width:140px; flex-shrink:0; }
+  .ai-hint{ font-size:11px; color: var(--grey); margin-top:10px; }
 
   /* Predictions table */
   .pred-table-wrap{
@@ -734,6 +751,24 @@
       </div>
     </div>
 
+    <div class="add-form ai-form" id="aiFormSection">
+      <div class="add-form-title">🤖 Ask the AI for a pick</div>
+      <div class="ai-form-grid">
+        <div class="field">
+          <label>Week</label>
+          <select id="aiWeek"></select>
+        </div>
+        <div class="field" style="flex:1;">
+          <label>Matchup or question</label>
+          <input type="text" id="aiTopic" placeholder="e.g. Who wins Cowboys vs Eagles?">
+        </div>
+        <div class="field">
+          <button class="btn btn-primary" id="askAiBtn" style="width:100%;">Ask AI</button>
+        </div>
+      </div>
+      <div class="ai-hint" id="aiHint">The AI Analyst will research and add its own pick to the board.</div>
+    </div>
+
     <div class="main-toolbar">
       <div class="section-title" style="display:flex; align-items:center; gap:8px;">
       <svg width="16" height="20" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
@@ -907,8 +942,13 @@ function initFirebase(){
 }
 
 function attachListeners(){
+  let aiCheckDone = false;
   db.ref('players').on('value',
-    (snap) => { players = objToArray(snap.val()); render(); },
+    (snap) => {
+      players = objToArray(snap.val());
+      render();
+      if(!aiCheckDone){ aiCheckDone = true; ensureAIPlayer(); }
+    },
     (err) => showBanner('Players sync error: ' + err.message, 'error')
   );
   db.ref('predictions').on('value',
@@ -919,6 +959,23 @@ function attachListeners(){
     (snap) => { season = snap.val() || { finished:false, winnerIds:[], finishedAt:null }; render(); },
     (err) => showBanner('Season sync error: ' + err.message, 'error')
   );
+}
+
+// ====== AI PLAYER SETUP ======
+// Paste the public URL of your deployed Cloudflare Worker here (looks like
+// https://your-worker-name.your-subdomain.workers.dev).
+const AI_WORKER_URL = "https://ai-analyst.troy-mercer.workers.dev";
+const AI_APP_SECRET = "j4klXrKzgkzMXXaHJ6An7jfBAoxqjwwG";
+const AI_PLAYER_ID = 'ai-analyst';
+
+async function ensureAIPlayer(){
+  if(players.find(p => p.id === AI_PLAYER_ID)) return;
+  if(!firebaseReady) return;
+  try{
+    await db.ref('players/' + AI_PLAYER_ID).set({
+      id: AI_PLAYER_ID, name: 'The Algorithm', nickname: 'AI Analyst', photo: null, isAI: true
+    });
+  }catch(e){ /* non-fatal, will retry on next load */ }
 }
 
 async function savePlayers(){
@@ -999,6 +1056,7 @@ function renderWeekOptions(){
   $('formWeek').innerHTML = WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
   $('filterWeek').innerHTML = '<option value="all">All weeks</option>' +
     WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
+  $('aiWeek').innerHTML = WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
 }
 
 function renderPlayers(){
@@ -1012,15 +1070,16 @@ function renderPlayers(){
     const score = scoreFor(p.id);
     const rankClass = idx === 0 && score > 0 ? 'rank-1' : '';
     const activeClass = activePlayerFilter === p.id ? 'active' : '';
+    const aiClass = p.isAI ? 'avatar-ai' : '';
     const avatarContent = p.photo
       ? `style="background-image:url('${p.photo}')"`
       : '';
     return `
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
         <div class="rank-badge">${idx+1}</div>
-        <label class="avatar" ${avatarContent} title="Click to change photo">
-          ${p.photo ? '' : initials(p.name)}
-          <input type="file" accept="image/*" data-photo-for="${p.id}">
+        <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
+          ${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}
+          ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
         </label>
         <div class="player-meta">
           <div class="player-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
@@ -1109,12 +1168,13 @@ function renderPredictions(){
   body.innerHTML = rows.map(row => {
     const player = players.find(p => p.id === row.playerId);
     const avatarStyle = player && player.photo ? `style="background-image:url('${player.photo}')"` : '';
+    const cellAiClass = player && player.isAI ? 'avatar-ai' : '';
     return `
       <tr data-pred-id="${row.id}">
         <td data-label="Week"><span class="week-chip">${row.week}</span></td>
         <td data-label="Player">
           <div class="cell-player">
-            <div class="cell-avatar" ${avatarStyle}>${player && player.photo ? '' : initials(player ? player.name : '?')}</div>
+            <div class="cell-avatar ${cellAiClass}" ${avatarStyle}>${player && player.photo ? '' : (player && player.isAI ? '🤖' : initials(player ? player.name : '?'))}</div>
             ${player ? escapeHtml(player.name) : '<em style="color:var(--grey)">Removed</em>'}
           </div>
         </td>
@@ -1198,10 +1258,11 @@ function renderPodium(){
       if(!p) return '';
       const cls = ranked.length === 3 ? slotClass[visualIdx] : 'p' + (rankIdx+1);
       const avatarStyle = p.photo ? `style="background-image:url('${p.photo}')"` : '';
+      const podiumAiClass = p.isAI ? 'avatar-ai' : '';
       return `
         <div class="podium-slot ${cls}">
           <div class="podium-medal">${medals[rankIdx]}</div>
-          <div class="podium-avatar" ${avatarStyle}>${p.photo ? '' : initials(p.name)}</div>
+          <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}</div>
           <div class="podium-name">${escapeHtml(p.nickname || p.name)}${streakBadgeHtml(p.id)}</div>
           <div class="podium-score">${scoreFor(p.id)} pts</div>
           <div class="podium-bar">#${rankIdx+1}</div>
@@ -1265,6 +1326,7 @@ function renderTrophyBanner(){
 
 function applyLockState(){
   $('addFormSection').classList.toggle('locked-section', season.finished);
+  $('aiFormSection').classList.toggle('locked-section', season.finished);
   $('finishBtn').style.display = season.finished ? 'none' : 'inline-block';
   document.querySelectorAll('.pred-table-wrap input, .pred-table-wrap select, .pred-table-wrap .row-remove')
     .forEach(el => { el.disabled = !!season.finished; el.style.opacity = season.finished ? 0.5 : 1; });
@@ -1323,6 +1385,49 @@ $('addPredBtn').addEventListener('click', async () => {
   $('formText').value = '';
   await savePredictions();
   renderPlayers(); renderPredictions(); renderTicker();
+});
+
+$('askAiBtn').addEventListener('click', async () => {
+  const btn = $('askAiBtn');
+  const hint = $('aiHint');
+  const week = $('aiWeek').value;
+  const topic = $('aiTopic').value.trim();
+
+  if(AI_WORKER_URL.indexOf('PASTE_') === 0 || AI_APP_SECRET.indexOf('PASTE_') === 0){
+    await confirmModal('Setup needed', 'The AI Analyst isn\'t fully connected yet \u2014 the Worker URL and/or shared secret still need to be pasted into the code.', 'OK');
+    return;
+  }
+  if(!topic){ await confirmModal('Missing question', 'Type a matchup or question for the AI to predict.', 'OK'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Thinking...';
+  hint.textContent = 'Researching and generating a pick...';
+
+  try{
+    const res = await fetch(AI_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-App-Secret': AI_APP_SECRET },
+      body: JSON.stringify({ topic })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.prediction){
+      throw new Error(data.error || 'No prediction returned');
+    }
+    await ensureAIPlayer();
+    predictions.push({
+      id: uid(), playerId: AI_PLAYER_ID, week, text: data.prediction, result: 'pending', points: 1
+    });
+    await savePredictions();
+    renderPlayers(); renderPredictions(); renderTicker();
+    $('aiTopic').value = '';
+    hint.textContent = 'The AI Analyst will research and add its own pick to the board.';
+  }catch(e){
+    showBanner('AI request failed: ' + (e && e.message ? e.message : 'unknown error'), 'error');
+    hint.textContent = 'The AI Analyst will research and add its own pick to the board.';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Ask AI';
+  }
 });
 
 $('filterPlayer').addEventListener('change', (e) => {
