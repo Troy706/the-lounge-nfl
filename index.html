@@ -808,6 +808,91 @@
   }
   .beat-ai-empty{ color: var(--grey); font-size:13px; }
 
+  /* ---------- College Pick 6 ---------- */
+  .college-wrap{ border-color: rgba(31,191,117,0.35); }
+  .college-wrap .beat-ai-title{ color: var(--green); }
+  .college-week-badge{
+    display:inline-block;
+    font-family: var(--font-body);
+    font-weight:600;
+    text-transform:none;
+    letter-spacing:normal;
+    font-size:11px;
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    color: var(--white);
+    padding:2px 8px;
+    border-radius:10px;
+    margin-left:8px;
+  }
+  .college-leaderboard{ margin-bottom:16px; }
+  .college-games-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap:12px;
+  }
+  .college-game-card{
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:12px;
+  }
+  .college-game-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .college-conf-tag{
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color: var(--green);
+    background: rgba(31,191,117,0.12);
+    padding:3px 7px;
+    border-radius:3px;
+  }
+  .college-winner-select{
+    font-size:10px;
+    padding:4px 6px;
+    max-width:150px;
+  }
+  .college-matchup{
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:10px;
+  }
+  .college-vs{ color: var(--grey); font-weight:400; font-size:11px; margin:0 4px; }
+  .college-picks-list{ display:flex; flex-direction:column; gap:6px; }
+  .college-pick-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .college-pick-name{ font-size:12px; flex-shrink:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:90px; }
+  .college-pick-btns{ display:flex; gap:4px; }
+  .college-pick-btn{
+    background: var(--panel);
+    border:1px solid var(--line);
+    color: var(--grey);
+    font-size:10px;
+    padding:4px 7px;
+    border-radius:3px;
+    cursor:pointer;
+    max-width:80px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .college-pick-btn:hover{ border-color: var(--green); }
+  .college-pick-btn.selected{ background: rgba(31,191,117,0.18); border-color: var(--green); color: var(--white); font-weight:600; }
+
   /* ---------- Reactions ---------- */
   .reactions{ display:flex; gap:4px; flex-wrap:wrap; }
   .reaction-btn{
@@ -887,6 +972,8 @@
     <div class="podium-wrap" id="podiumWrap"></div>
 
     <div class="beat-ai-wrap" id="beatAiWrap"></div>
+
+    <div class="beat-ai-wrap college-wrap" id="collegeWrap"></div>
 
     <div class="add-form" id="addFormSection">
       <div class="add-form-title">Add a prediction</div>
@@ -1004,10 +1091,17 @@
 
 <script>
 const WEEKS = ['Preseason', ...Array.from({length:18}, (_,i)=>'Week '+(i+1)), 'Wild Card', 'Divisional', 'Conf. Championship', 'Super Bowl'];
+const COLLEGE_WEEKS = [
+  ...Array.from({length:15}, (_,i)=>'Week '+(i+1)),
+  'Conference Championships', 'Bowl Season', 'CFP First Round',
+  'CFP Quarterfinals', 'CFP Semifinals', 'National Championship'
+];
 
 let players = [];
 let predictions = [];
 let season = { finished: false, winnerIds: [], finishedAt: null };
+let collegeSlates = [];
+let collegePicks = [];
 let activePlayerFilter = 'all';
 let expandedPlayerId = null;
 
@@ -1144,6 +1238,14 @@ function attachListeners(){
     (snap) => { season = snap.val() || { finished:false, winnerIds:[], finishedAt:null }; render(); },
     (err) => showBanner('Season sync error: ' + err.message, 'error')
   );
+  db.ref('collegeSlates').on('value',
+    (snap) => { collegeSlates = objToArray(snap.val()); render(); },
+    (err) => showBanner('College slate sync error: ' + err.message, 'error')
+  );
+  db.ref('collegePicks').on('value',
+    (snap) => { collegePicks = objToArray(snap.val()); render(); },
+    (err) => showBanner('College picks sync error: ' + err.message, 'error')
+  );
 }
 
 // ====== AI PLAYER SETUP ======
@@ -1176,6 +1278,16 @@ async function savePredictions(){
 async function saveSeason(){
   if(!firebaseReady) return;
   try{ await db.ref('season').set(season); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+async function saveCollegeSlate(weekKey, slateObj){
+  if(!firebaseReady) return;
+  try{ await db.ref('collegeSlates/' + weekKey).set(slateObj); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+async function saveCollegePicks(){
+  if(!firebaseReady) return;
+  try{ await db.ref('collegePicks').set(arrayToObj(collegePicks)); }
   catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
 }
 
@@ -1266,6 +1378,129 @@ function getBeatAiStats(playerId){
   });
   return { weeksBeaten, bonus: weeksBeaten * 1.5 };
 }
+
+function getCollegeScore(playerId){
+  let score = 0;
+  collegeSlates.forEach(slate => {
+    (slate.games || []).forEach(game => {
+      if(game.winner && game.winner !== 'pending'){
+        const pick = collegePicks.find(p => p.gameId === game.id && p.playerId === playerId);
+        if(pick && pick.pickedTeam === game.winner) score++;
+      }
+    });
+  });
+  return score;
+}
+
+function getCurrentCollegeSlate(){
+  if(collegeSlates.length === 0) return null;
+  return [...collegeSlates].sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0))[0];
+}
+
+async function setCollegeWinner(weekKey, gameId, winner){
+  const slate = collegeSlates.find(s => s.weekKey === weekKey);
+  if(!slate) return;
+  const game = slate.games.find(g => g.id === gameId);
+  if(!game) return;
+  game.winner = winner;
+  await saveCollegeSlate(weekKey, slate);
+}
+
+async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
+  let pick = collegePicks.find(p => p.gameId === gameId && p.playerId === playerId);
+  if(pick){
+    if(pick.pickedTeam === pickedTeam){ return; }
+    pick.pickedTeam = pickedTeam;
+  } else {
+    pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
+    collegePicks.push(pick);
+  }
+  await saveCollegePicks();
+  renderCollegePick6();
+}
+
+function renderCollegePick6(){
+  const wrap = $('collegeWrap');
+  if(!wrap) return;
+  const humanPlayers = players.filter(p => !p.isAI);
+  const slate = getCurrentCollegeSlate();
+
+  const leaderboardHtml = humanPlayers.length === 0 ? '' : `
+    <div class="college-leaderboard">
+      ${humanPlayers
+        .map(p => ({ player: p, score: getCollegeScore(p.id) }))
+        .sort((a, b) => b.score - a.score)
+        .map((r, i) => `
+          <div class="beat-ai-row">
+            <div class="beat-ai-rank">#${i+1}</div>
+            <div class="beat-ai-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+            <div class="beat-ai-pts">${r.score} pt${r.score === 1 ? '' : 's'}</div>
+          </div>
+        `).join('')}
+    </div>
+  `;
+
+  if(!slate){
+    wrap.innerHTML = `
+      <div class="beat-ai-title">🏈 College Pick 6<span class="beat-ai-sub">Six marquee college games, picked weekly by The Algorithm \u2014 own separate score</span></div>
+      <div class="beat-ai-empty">This week's slate hasn't been generated yet \u2014 check back after the next scheduled run.</div>
+    `;
+    return;
+  }
+
+  const gamesHtml = slate.games.map(game => {
+    const winnerSet = game.winner && game.winner !== 'pending';
+    return `
+      <div class="college-game-card">
+        <div class="college-game-header">
+          <span class="college-conf-tag">${escapeHtml(game.conference)}</span>
+          <select class="college-winner-select" data-game-id="${game.id}">
+            <option value="pending" ${!winnerSet ? 'selected' : ''}>Winner: Pending</option>
+            <option value="${escapeAttr(game.teamA)}" ${game.winner === game.teamA ? 'selected' : ''}>${escapeHtml(game.teamA)} won</option>
+            <option value="${escapeAttr(game.teamB)}" ${game.winner === game.teamB ? 'selected' : ''}>${escapeHtml(game.teamB)} won</option>
+          </select>
+        </div>
+        <div class="college-matchup">${escapeHtml(game.teamA)} <span class="college-vs">vs</span> ${escapeHtml(game.teamB)}</div>
+        <div class="college-picks-list">
+          ${humanPlayers.length === 0 ? '<div class="stats-empty">Add players to start picking.</div>' : humanPlayers.map(p => {
+            const pick = collegePicks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
+            const picked = pick ? pick.pickedTeam : null;
+            const correct = winnerSet && picked && picked === game.winner;
+            const wrong = winnerSet && picked && picked !== game.winner;
+            return `
+              <div class="college-pick-row">
+                <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ' ✅' : ''}${wrong ? ' ❌' : ''}</span>
+                <div class="college-pick-btns">
+                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}">${escapeHtml(game.teamA)}</button>
+                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}">${escapeHtml(game.teamB)}</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="beat-ai-title">🏈 College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">Six marquee college games, picked weekly by The Algorithm \u2014 own separate score</span></div>
+    ${leaderboardHtml}
+    <div class="college-games-grid">${gamesHtml}</div>
+  `;
+
+  wrap.querySelectorAll('.college-winner-select').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      await setCollegeWinner(slate.weekKey, sel.dataset.gameId, e.target.value);
+      renderCollegePick6();
+    });
+  });
+  wrap.querySelectorAll('.college-pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setCollegePick(slate.weekKey, btn.dataset.gameId, btn.dataset.playerId, btn.dataset.team);
+    });
+  });
+}
+
 
 function renderBeatAiBoard(){
   const wrap = $('beatAiWrap');
@@ -1682,6 +1917,7 @@ function render(){
   renderTrophyBanner();
   renderPodium();
   renderBeatAiBoard();
+  renderCollegePick6();
   applyLockState();
 }
 
