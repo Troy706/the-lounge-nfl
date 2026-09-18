@@ -445,6 +445,31 @@
     font-style:italic;
     margin-top:4px;
   }
+  .comment-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:6px;
+  }
+  .comment-input{
+    flex:1;
+    min-width:0;
+    background: transparent;
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:5px 8px;
+    font-size:11px;
+    color: var(--white);
+  }
+  .comment-input::placeholder{ color: var(--grey); font-style:italic; }
+  .comment-input:focus{ border-color: var(--red); background: var(--panel-raised); }
+  .comment-count{
+    font-size:9px;
+    color: var(--grey);
+    flex-shrink:0;
+    width:34px;
+    text-align:right;
+  }
 
   .ai-form{ border-color: rgba(79,209,255,0.35); }
   .ai-form .add-form-title{ color: #4fd1ff; }
@@ -1453,6 +1478,10 @@ function renderPredictions(){
           ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.nickname || addedByPlayer.name)}</div>` : ''}
           ${isAutoAiPick ? `<div class="added-by-tag ai-tag">🤖 AI predicted</div>` : ''}
           ${row.general ? `<div class="general-tag">📋 General prediction (no points)</div>` : ''}
+          <div class="comment-row">
+            <input type="text" class="comment-input" maxlength="80" placeholder="💬 Add a comment..." value="${escapeAttr(row.comment || '')}">
+            <span class="comment-count">${(row.comment || '').length}/80</span>
+          </div>
         </td>
         <td data-label="Result">
           <select class="result-select ${row.result}">
@@ -1486,6 +1515,15 @@ function renderPredictions(){
     const row = predictions.find(p => p.id === id);
     tr.querySelector('.pred-text-input').addEventListener('change', async (e) => {
       row.text = e.target.value; await savePredictions();
+    });
+    const commentInput = tr.querySelector('.comment-input');
+    const commentCount = tr.querySelector('.comment-count');
+    commentInput.addEventListener('input', (e) => {
+      commentCount.textContent = `${e.target.value.length}/80`;
+    });
+    commentInput.addEventListener('change', async (e) => {
+      row.comment = e.target.value;
+      await savePredictions();
     });
     const resultSel = tr.querySelector('.result-select');
     resultSel.addEventListener('change', async (e) => {
