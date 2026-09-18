@@ -39,39 +39,52 @@
   .football-icon path{ fill: var(--gold); }
   .football-icon .laces{ stroke:#0a0a0c; stroke-width:1.4; }
 
-  /* ---------- Yard-line ruler divider ---------- */
-  .yard-ruler{
-    position:relative;
-    height:26px;
-    background: #0d1f14;
-    background-image: linear-gradient(180deg, #123a22 0%, #0d1f14 100%);
+  /* ---------- Countdown strip ---------- */
+  .countdown-strip{
+    display:flex;
+    gap:0;
+    background: #0a140d;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 64px),
+      linear-gradient(180deg, #102315 0%, #0a140d 100%);
     border-bottom:1px solid var(--line);
     overflow:hidden;
+    flex-wrap:wrap;
+  }
+  .countdown-item{
+    flex:1;
+    min-width:220px;
     display:flex;
     align-items:center;
+    gap:10px;
+    padding:9px 18px;
+    border-right:1px solid rgba(255,255,255,0.08);
   }
-  .yard-ruler-track{
-    display:flex;
-    align-items:center;
-    white-space:nowrap;
-    animation: scroll-yard 40s linear infinite;
-  }
-  @media (prefers-reduced-motion: reduce){ .yard-ruler-track{ animation:none; } }
-  .yard-mark{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:0 22px;
-    font-family: var(--font-display);
-    font-weight:600;
+  .countdown-item:last-child{ border-right:none; }
+  .countdown-icon{ font-size:18px; flex-shrink:0; }
+  .countdown-label{
+    font-family: var(--font-body);
     font-size:11px;
-    letter-spacing:0.08em;
-    color: rgba(255,255,255,0.55);
-    border-left: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.75);
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
-  @keyframes scroll-yard{
-    0%{ transform:translateX(0); }
-    100%{ transform:translateX(-50%); }
+  .countdown-time{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:13px;
+    color: var(--gold);
+    flex-shrink:0;
+    letter-spacing:0.02em;
+  }
+  .countdown-item.countdown-college .countdown-time{ color: var(--green); }
+  .countdown-empty{
+    padding:9px 18px;
+    font-size:11px;
+    color: var(--grey);
   }
 
   /* ---------- Ticker header ---------- */
@@ -102,15 +115,47 @@
   }
 
   header.masthead{
-    background: linear-gradient(180deg, #101216 0%, var(--ink) 100%);
+    position:relative;
+    background:
+      radial-gradient(ellipse at 50% -20%, rgba(255,255,255,0.06) 0%, transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 72px),
+      linear-gradient(180deg, #16311f 0%, #0e2015 55%, #0a1610 100%);
     padding: 22px 20px 18px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 2px solid #1fbf75;
     display:flex;
     align-items:flex-end;
     justify-content:space-between;
     gap:16px;
     flex-wrap:wrap;
+    overflow:hidden;
   }
+  header.masthead::before{
+    content:'';
+    position:absolute;
+    top:0; left:50%;
+    width:1px; height:100%;
+    background: rgba(255,255,255,0.12);
+    transform: translateX(-50%);
+  }
+  header.masthead::after{
+    content:'';
+    position:absolute;
+    top:50%; left:50%;
+    width:64px; height:64px;
+    border:2px solid rgba(255,255,255,0.10);
+    border-radius:50%;
+    transform: translate(-50%,-50%);
+  }
+  .masthead-left, .masthead-right{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    position:relative;
+    z-index:1;
+  }
+  .masthead-right{ align-items:flex-end; flex-direction:column; gap:8px; }
+  .masthead-right-top{ display:flex; align-items:center; gap:12px; }
+  .masthead-actions{ display:flex; gap:8px; }
   .masthead-title{
     font-family: var(--font-display);
     font-weight:700;
@@ -118,13 +163,25 @@
     line-height:0.95;
     text-transform:uppercase;
     letter-spacing:0.01em;
+    background: linear-gradient(180deg, #ffffff 0%, #d8dbe0 55%, #9aa0aa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.6);
+    filter: drop-shadow(0 1px 0 rgba(255,255,255,0.15));
   }
-  .masthead-title span{ color: var(--red); }
+  .masthead-title span{
+    background: linear-gradient(180deg, #ff4d6a 0%, var(--red) 55%, #8a0018 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   .masthead-sub{
-    color:var(--grey);
+    color: rgba(255,255,255,0.6);
     font-size:13px;
     margin-top:6px;
   }
+  .badge-crest{ flex-shrink:0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
   .btn{
     font-family: var(--font-display);
     font-weight:600;
@@ -217,9 +274,17 @@
     font-size:20px;
     color: var(--grey);
     border:2px solid var(--line);
-    overflow:hidden;
+    overflow:visible;
+    position:relative;
   }
   .avatar input{ display:none; }
+  .avatar-trophy{
+    position:absolute;
+    bottom:-4px; right:-4px;
+    font-size:16px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+    pointer-events:none;
+  }
   .avatar-ai{
     border-color: #4fd1ff !important;
     box-shadow: 0 0 0 2px rgba(79,209,255,0.25), 0 0 12px rgba(79,209,255,0.35);
@@ -932,27 +997,52 @@
 </div>
 
 <header class="masthead">
-  <div style="display:flex; align-items:center; gap:14px;">
-    <svg class="football-icon" width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 20c0-7 6-13 14-13s14 6 14 13-6 13-14 13S6 27 6 20z" fill="#8a4a2b"/>
-      <path d="M6 20c0-7 6-13 14-13s14 6 14 13-6 13-14 13S6 27 6 20z" fill="none" stroke="#5c2f18" stroke-width="1.2"/>
-      <line class="laces" x1="14" y1="20" x2="26" y2="20"/>
-      <line class="laces" x1="17" y1="17.5" x2="17" y2="22.5"/>
-      <line class="laces" x1="20" y1="16.5" x2="20" y2="23.5"/>
-      <line class="laces" x1="23" y1="17.5" x2="23" y2="22.5"/>
+  <div class="masthead-left">
+    <svg class="badge-crest" width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="proGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ff2d4d"/>
+          <stop offset="100%" stop-color="#8a0018"/>
+        </linearGradient>
+      </defs>
+      <circle cx="26" cy="26" r="24" fill="url(#proGrad)" stroke="#fff" stroke-width="1.5"/>
+      <ellipse cx="26" cy="21" rx="10" ry="6.5" fill="#8a4a2b" stroke="#5c2f18" stroke-width="1"/>
+      <line x1="20" y1="21" x2="32" y2="21" stroke="#fff" stroke-width="1"/>
+      <line x1="23" y1="19" x2="23" y2="23" stroke="#fff" stroke-width="0.8"/>
+      <line x1="26" y1="18.5" x2="26" y2="23.5" stroke="#fff" stroke-width="0.8"/>
+      <line x1="29" y1="19" x2="29" y2="23" stroke="#fff" stroke-width="0.8"/>
+      <text x="26" y="38" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="7" fill="#fff" letter-spacing="1">PRO</text>
     </svg>
     <div>
       <div class="masthead-title">THE <span>LOUNGE</span></div>
       <div class="masthead-sub">2026 NFL Predictions &middot; Everyone can add, edit, and grade picks</div>
     </div>
   </div>
-  <button class="btn btn-primary" id="finishBtn">Finish season &amp; crown champion</button>
-  <button class="btn btn-ghost" id="resetBtn">Reset all data</button>
+  <div class="masthead-right">
+    <div class="masthead-right-top">
+      <div class="masthead-actions">
+        <button class="btn btn-primary" id="finishBtn">Finish season &amp; crown champion</button>
+        <button class="btn btn-ghost" id="resetBtn">Reset all data</button>
+      </div>
+      <svg class="badge-crest" width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="collegeGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2be08a"/>
+            <stop offset="100%" stop-color="#0a5c33"/>
+          </linearGradient>
+        </defs>
+        <circle cx="26" cy="26" r="24" fill="url(#collegeGrad)" stroke="#fff" stroke-width="1.5"/>
+        <path d="M10 30c2-6 5-10 8-12M10 30c3 1 6 0 8-2M10 30c1 3 3 5 5 6" stroke="#ffe38a" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <path d="M42 30c-2-6-5-10-8-12M42 30c-3 1-6 0-8-2M42 30c-1 3-3 5-5 6" stroke="#ffe38a" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="26" cy="21" rx="9" ry="6" fill="#8a4a2b" stroke="#5c2f18" stroke-width="1"/>
+        <line x1="20.5" y1="21" x2="31.5" y2="21" stroke="#fff" stroke-width="1"/>
+        <text x="26" y="40" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="6" fill="#fff" letter-spacing="0.5">COLLEGE</text>
+      </svg>
+    </div>
+  </div>
 </header>
 
-<div class="yard-ruler">
-  <div class="yard-ruler-track" id="yardTrack"></div>
-</div>
+<div class="countdown-strip" id="countdownStrip"></div>
 
 <div class="layout">
   <aside class="rail">
@@ -1102,6 +1192,7 @@ let predictions = [];
 let season = { finished: false, winnerIds: [], finishedAt: null };
 let collegeSlates = [];
 let collegePicks = [];
+let marqueeGames = { nfl: null, college: null };
 let activePlayerFilter = 'all';
 let expandedPlayerId = null;
 
@@ -1246,6 +1337,10 @@ function attachListeners(){
     (snap) => { collegePicks = objToArray(snap.val()); render(); },
     (err) => showBanner('College picks sync error: ' + err.message, 'error')
   );
+  db.ref('marqueeGames').on('value',
+    (snap) => { marqueeGames = snap.val() || { nfl: null, college: null }; renderCountdowns(); },
+    (err) => showBanner('Marquee games sync error: ' + err.message, 'error')
+  );
 }
 
 // ====== AI PLAYER SETUP ======
@@ -1382,14 +1477,34 @@ function getBeatAiStats(playerId){
 function getCollegeScore(playerId){
   let score = 0;
   collegeSlates.forEach(slate => {
-    (slate.games || []).forEach(game => {
-      if(game.winner && game.winner !== 'pending'){
-        const pick = collegePicks.find(p => p.gameId === game.id && p.playerId === playerId);
-        if(pick && pick.pickedTeam === game.winner) score++;
-      }
+    const games = slate.games || [];
+    const gradedGames = games.filter(g => g.winner && g.winner !== 'pending');
+    let weekCorrect = 0;
+    gradedGames.forEach(game => {
+      const pick = collegePicks.find(p => p.gameId === game.id && p.playerId === playerId);
+      if(pick && pick.pickedTeam === game.winner){ score++; weekCorrect++; }
     });
+    if(games.length === 6 && gradedGames.length === 6 && weekCorrect === 6){
+      score += 2; // perfect week bonus
+    }
   });
   return score;
+}
+
+function getCollegePerfectWeeks(playerId){
+  let count = 0;
+  collegeSlates.forEach(slate => {
+    const games = slate.games || [];
+    if(games.length !== 6) return;
+    const allGraded = games.every(g => g.winner && g.winner !== 'pending');
+    if(!allGraded) return;
+    const allCorrect = games.every(game => {
+      const pick = collegePicks.find(p => p.gameId === game.id && p.playerId === playerId);
+      return pick && pick.pickedTeam === game.winner;
+    });
+    if(allCorrect) count++;
+  });
+  return count;
 }
 
 function getCurrentCollegeSlate(){
@@ -1442,7 +1557,7 @@ function renderCollegePick6(){
 
   if(!slate){
     wrap.innerHTML = `
-      <div class="beat-ai-title">🏈 College Pick 6<span class="beat-ai-sub">Six marquee college games, picked weekly by The Algorithm \u2014 own separate score</span></div>
+      <div class="beat-ai-title">🏈 College Pick 6<span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
       <div class="beat-ai-empty">This week's slate hasn't been generated yet \u2014 check back after the next scheduled run.</div>
     `;
     return;
@@ -1483,7 +1598,7 @@ function renderCollegePick6(){
   }).join('');
 
   wrap.innerHTML = `
-    <div class="beat-ai-title">🏈 College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">Six marquee college games, picked weekly by The Algorithm \u2014 own separate score</span></div>
+    <div class="beat-ai-title">🏈 College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
     ${leaderboardHtml}
     <div class="college-games-grid">${gamesHtml}</div>
   `;
@@ -1551,10 +1666,34 @@ function renderTicker(){
     parts.join(sep) + sep;
 }
 
-function renderYardRuler(){
-  const sequence = ['G','10','20','30','40','50','40','30','20','10','G'];
-  const marks = sequence.map(n => `<span class="yard-mark">${n === 'G' ? 'GOAL' : n}</span>`).join('');
-  $('yardTrack').innerHTML = marks + marks;
+function formatCountdown(targetISO){
+  const target = new Date(targetISO).getTime();
+  if(isNaN(target)) return 'TBD';
+  const diff = target - Date.now();
+  if(diff <= 0) return 'Kickoff! 🏈';
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if(days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if(hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
+
+function renderCountdowns(){
+  const strip = $('countdownStrip');
+  if(!strip) return;
+  const nfl = marqueeGames && marqueeGames.nfl;
+  const college = marqueeGames && marqueeGames.college;
+  if(!nfl && !college){
+    strip.innerHTML = `<div class="countdown-empty">Marquee matchup countdowns will appear here once generated.</div>`;
+    return;
+  }
+  strip.innerHTML = `
+    ${nfl ? `<div class="countdown-item"><span class="countdown-icon">🏈</span><span class="countdown-label">${escapeHtml(nfl.matchup)}</span><span class="countdown-time">${formatCountdown(nfl.kickoffISO)}</span></div>` : ''}
+    ${college ? `<div class="countdown-item countdown-college"><span class="countdown-icon">🎓</span><span class="countdown-label">${escapeHtml(college.matchup)}</span><span class="countdown-time">${formatCountdown(college.kickoffISO)}</span></div>` : ''}
+  `;
 }
 
 function renderPlayerOptions(){
@@ -1601,12 +1740,14 @@ function renderPlayers(){
       ? `style="background-image:url('${p.photo}')"`
       : '';
     const statsOpen = expandedPlayerId === p.id;
+    const perfectWeeks = p.isAI ? 0 : getCollegePerfectWeeks(p.id);
     return `
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
         ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
           ${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}
           ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
+          ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect College Pick 6 week${perfectWeeks === 1 ? '' : 's'}">🏆</span>` : ''}
         </label>
         <div class="player-meta">
           <div class="player-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
@@ -1913,7 +2054,7 @@ function render(){
   renderPlayers();
   renderPredictions();
   renderTicker();
-  renderYardRuler();
+  renderCountdowns();
   renderTrophyBanner();
   renderPodium();
   renderBeatAiBoard();
@@ -2013,6 +2154,8 @@ if(initFirebase()){
 } else {
   render();
 }
+
+setInterval(renderCountdowns, 1000);
 </script>
 
 </body>
