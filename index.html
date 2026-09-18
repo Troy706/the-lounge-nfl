@@ -57,21 +57,34 @@
     display:flex;
     align-items:center;
     gap:14px;
-    padding:16px 18px;
-    border-radius:8px;
+    padding:18px 20px;
+    border-radius:10px;
     overflow:hidden;
     background:
-      radial-gradient(circle at 15% 20%, rgba(228,0,43,0.22) 0%, transparent 55%),
-      linear-gradient(135deg, #1a0a0d 0%, #0c0c0e 60%);
-    border:1px solid rgba(228,0,43,0.3);
+      radial-gradient(circle at 15% 20%, rgba(228,0,43,0.24) 0%, transparent 55%),
+      linear-gradient(135deg, #1e0d10 0%, #0c0c0e 60%);
+    border:1px solid rgba(228,0,43,0.35);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
   }
   .countdown-item.countdown-college{
     background:
-      radial-gradient(circle at 15% 20%, rgba(31,191,117,0.22) 0%, transparent 55%),
-      linear-gradient(135deg, #0a1a10 0%, #0c0c0e 60%);
-    border-color: rgba(31,191,117,0.3);
+      radial-gradient(circle at 15% 20%, rgba(31,191,117,0.24) 0%, transparent 55%),
+      linear-gradient(135deg, #0d1f14 0%, #0c0c0e 60%);
+    border-color: rgba(31,191,117,0.35);
   }
-  .countdown-icon{ font-size:30px; flex-shrink:0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+  .countdown-icon-badge{
+    flex-shrink:0;
+    width:56px; height:56px;
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(160deg, rgba(228,0,43,0.25), rgba(0,0,0,0.3));
+    border:1px solid rgba(228,0,43,0.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 3px 8px rgba(0,0,0,0.4);
+  }
+  .countdown-icon-badge-college{
+    background: linear-gradient(160deg, rgba(31,191,117,0.25), rgba(0,0,0,0.3));
+    border-color: rgba(31,191,117,0.4);
+  }
   .countdown-body{ flex:1; min-width:0; }
   .countdown-eyebrow{
     font-family: var(--font-display);
@@ -96,11 +109,29 @@
   .countdown-time{
     font-family: var(--font-display);
     font-weight:700;
-    font-size:20px;
+    font-size:22px;
     color: var(--gold);
     letter-spacing:0.02em;
+    text-shadow: 0 0 12px rgba(255,184,28,0.35);
   }
-  .countdown-item.countdown-college .countdown-time{ color: var(--green); }
+  .countdown-item.countdown-college .countdown-time{ color: var(--green); text-shadow: 0 0 12px rgba(31,191,117,0.35); }
+  .countdown-cta{
+    display:inline-block;
+    margin-top:8px;
+    background: var(--red);
+    color:#fff;
+    border:none;
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    padding:6px 12px;
+    border-radius:4px;
+    cursor:pointer;
+    box-shadow: 0 2px 6px rgba(228,0,43,0.4);
+  }
+  .countdown-cta-college{ background: var(--green); box-shadow: 0 2px 6px rgba(31,191,117,0.4); }
   .countdown-empty{
     padding:14px 18px;
     font-size:12px;
@@ -123,18 +154,29 @@
   .quick-nav-tile{
     display:flex;
     align-items:center;
-    gap:10px;
-    background: var(--panel-raised);
+    gap:12px;
+    background: linear-gradient(160deg, var(--panel-raised) 0%, #191c23 100%);
     border:1px solid var(--line);
     border-top:3px solid var(--line);
-    border-radius:6px;
-    padding:12px 14px;
+    border-radius:8px;
+    padding:14px;
     cursor:pointer;
     text-align:left;
-    transition: transform 0.12s ease, border-color 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .quick-nav-tile:hover{ transform: translateY(-2px); }
-  .qnt-icon{ font-size:22px; flex-shrink:0; }
+  .quick-nav-tile:hover{ transform: translateY(-3px); }
+  .qnt-icon-wrap{
+    width:44px; height:44px;
+    flex-shrink:0;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(255,255,255,0.06);
+  }
+  .qnt-icon-green{ background: rgba(31,191,117,0.16); box-shadow: inset 0 0 0 1px rgba(31,191,117,0.4); }
+  .qnt-icon-blue{ background: rgba(255,184,28,0.16); box-shadow: inset 0 0 0 1px rgba(255,184,28,0.4); }
+  .qnt-icon-purple{ background: rgba(79,209,255,0.16); box-shadow: inset 0 0 0 1px rgba(79,209,255,0.4); }
+  .qnt-icon-red{ background: rgba(228,0,43,0.16); box-shadow: inset 0 0 0 1px rgba(228,0,43,0.4); }
   .qnt-text{ display:flex; flex-direction:column; flex:1; min-width:0; }
   .qnt-title{
     font-family: var(--font-display);
@@ -153,13 +195,13 @@
   }
   .qnt-arrow{ color: var(--grey); font-size:14px; flex-shrink:0; }
   .qnt-green{ border-top-color: var(--green); }
-  .qnt-green:hover{ border-top-color: var(--green); box-shadow: 0 4px 14px rgba(31,191,117,0.25); }
+  .qnt-green:hover{ border-top-color: var(--green); box-shadow: 0 6px 18px rgba(31,191,117,0.3), inset 0 1px 0 rgba(255,255,255,0.06); }
   .qnt-blue{ border-top-color: var(--gold); }
-  .qnt-blue:hover{ border-top-color: var(--gold); box-shadow: 0 4px 14px rgba(255,184,28,0.25); }
+  .qnt-blue:hover{ border-top-color: var(--gold); box-shadow: 0 6px 18px rgba(255,184,28,0.3), inset 0 1px 0 rgba(255,255,255,0.06); }
   .qnt-purple{ border-top-color: #4fd1ff; }
-  .qnt-purple:hover{ border-top-color: #4fd1ff; box-shadow: 0 4px 14px rgba(79,209,255,0.25); }
+  .qnt-purple:hover{ border-top-color: #4fd1ff; box-shadow: 0 6px 18px rgba(79,209,255,0.3), inset 0 1px 0 rgba(255,255,255,0.06); }
   .qnt-red{ border-top-color: var(--red); }
-  .qnt-red:hover{ border-top-color: var(--red); box-shadow: 0 4px 14px rgba(228,0,43,0.25); }
+  .qnt-red:hover{ border-top-color: var(--red); box-shadow: 0 6px 18px rgba(228,0,43,0.3), inset 0 1px 0 rgba(255,255,255,0.06); }
 
   /* ---------- Ticker header ---------- */
   .ticker-bar{
@@ -265,6 +307,7 @@
     margin-top:2px;
   }
   .badge-crest{ flex-shrink:0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+  .icon-inline{ flex-shrink:0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
   .btn{
     font-family: var(--font-display);
     font-weight:600;
@@ -318,15 +361,17 @@
     display:flex;
     align-items:center;
     gap:12px;
-    background: var(--panel-raised);
+    background: linear-gradient(160deg, var(--panel-raised) 0%, #1c1f26 100%);
     border:1px solid var(--line);
     border-left: 4px solid var(--line);
-    border-radius:4px;
+    border-radius:6px;
     padding:10px 12px;
     margin-bottom:10px;
     position:relative;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
   }
+  .player-card:hover{ box-shadow: 0 5px 14px rgba(0,0,0,0.4); }
   .player-card:hover .player-remove{ opacity:1; }
   .player-card.active{ border-left-color: var(--red); background:#20242c; }
   .player-card.rank-1{ border-left-color: var(--gold); }
@@ -335,15 +380,16 @@
     font-size:11px;
     font-weight:700;
     color: var(--ink);
-    background: var(--grey);
-    width:20px; height:20px;
+    background: linear-gradient(135deg, #c7c9cd, #7a808a);
+    width:22px; height:22px;
     border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     position:absolute;
     top:-6px; left:-6px;
     border:2px solid var(--panel);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
   }
-  .player-card.rank-1 .rank-badge{ background: var(--gold); }
+  .player-card.rank-1 .rank-badge{ background: linear-gradient(135deg, #ffe38a, #c99400); box-shadow: 0 2px 8px rgba(255,184,28,0.5), inset 0 1px 0 rgba(255,255,255,0.4); }
   .avatar{
     width:64px; height:64px;
     border-radius:50%;
@@ -835,13 +881,17 @@
 
   /* ---------- Podium leaderboard ---------- */
   .podium-wrap{
-    background: var(--panel);
+    background: linear-gradient(160deg, var(--panel) 0%, #101216 100%);
     border:1px solid var(--line);
-    border-radius:8px;
+    border-radius:10px;
     padding:20px;
     margin-bottom:22px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
   }
   .podium-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
     font-family: var(--font-display);
     font-weight:600;
     text-transform:uppercase;
@@ -863,6 +913,19 @@
     align-items:center;
     width:120px;
   }
+  .podium-avatar-frame{
+    padding:4px;
+    border-radius:50%;
+    margin-bottom:8px;
+    background: linear-gradient(135deg, var(--line), #23262e);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  .podium-avatar-frame.p1{
+    background: linear-gradient(135deg, #ffe38a, #c99400);
+    box-shadow: 0 4px 16px rgba(255,184,28,0.35);
+  }
+  .podium-avatar-frame.p2{ background: linear-gradient(135deg, #e8ebee, #9aa0aa); }
+  .podium-avatar-frame.p3{ background: linear-gradient(135deg, #e0a468, #8a5a2e); }
   .podium-avatar{
     width:72px; height:72px;
     border-radius:50%;
@@ -870,16 +933,13 @@
     background-size:cover; background-position:center;
     display:flex; align-items:center; justify-content:center;
     font-family: var(--font-display); font-weight:700; font-size:22px; color:var(--grey);
-    border:3px solid var(--line);
-    margin-bottom:8px;
+    border:2px solid #0c0c0e;
   }
-  .podium-slot.p1 .podium-avatar{ border-color: var(--gold); width:88px; height:88px; font-size:26px; }
-  .podium-slot.p2 .podium-avatar{ border-color:#c7c9cd; }
-  .podium-slot.p3 .podium-avatar{ border-color:#c68a4e; }
-  .podium-medal{ font-size:22px; margin-bottom:4px; }
+  .podium-avatar-frame.p1 .podium-avatar{ width:88px; height:88px; font-size:26px; }
+  .podium-medal{ display:flex; justify-content:center; margin-bottom:2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
   .podium-crown{
-    font-size:20px;
-    margin-bottom:-4px;
+    display:flex; justify-content:center;
+    margin-bottom:-6px;
     filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     animation: crown-bob 2.4s ease-in-out infinite;
   }
@@ -916,11 +976,12 @@
 
   /* ---------- Beat the AI board ---------- */
   .beat-ai-wrap{
-    background: var(--panel);
+    background: linear-gradient(160deg, var(--panel) 0%, #101216 100%);
     border:1px solid rgba(79,209,255,0.35);
     border-radius:8px;
     padding:20px;
     margin-bottom:22px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
   }
   .beat-ai-title{
     font-family: var(--font-display);
@@ -1090,6 +1151,108 @@
 </head>
 <body>
 
+<svg style="display:none" aria-hidden="true">
+<defs>
+  <linearGradient id="gradFootball" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#a5623f"/><stop offset="100%" stop-color="#6b3a20"/>
+  </linearGradient>
+  <linearGradient id="gradCollegeCap" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#2a2f38"/><stop offset="100%" stop-color="#111318"/>
+  </linearGradient>
+  <linearGradient id="gradAiRobot" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7fe8ff"/><stop offset="100%" stop-color="#1a8fb0"/>
+  </linearGradient>
+  <linearGradient id="gradCrownIcon" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ffe38a"/><stop offset="100%" stop-color="#c99400"/>
+  </linearGradient>
+  <linearGradient id="gradTrophyIcon" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ffe38a"/><stop offset="100%" stop-color="#c99400"/>
+  </linearGradient>
+  <linearGradient id="gradMedalGold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ffe38a"/><stop offset="100%" stop-color="#c99400"/>
+  </linearGradient>
+  <linearGradient id="gradMedalSilver" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#eef0f3"/><stop offset="100%" stop-color="#9aa0aa"/>
+  </linearGradient>
+  <linearGradient id="gradMedalBronze" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#e2a874"/><stop offset="100%" stop-color="#8a5a2c"/>
+  </linearGradient>
+  <linearGradient id="gradClipboard" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#3fd68a"/><stop offset="100%" stop-color="#0f7a45"/>
+  </linearGradient>
+
+  <symbol id="icon-football" viewBox="0 0 40 40">
+    <ellipse cx="20" cy="20" rx="16" ry="10.5" fill="url(#gradFootball)" stroke="#4a2814" stroke-width="1.2"/>
+    <line x1="11" y1="20" x2="29" y2="20" stroke="#fff" stroke-width="1.3"/>
+    <line x1="15" y1="17.5" x2="15" y2="22.5" stroke="#fff" stroke-width="1"/>
+    <line x1="19" y1="16.5" x2="19" y2="23.5" stroke="#fff" stroke-width="1"/>
+    <line x1="23" y1="16.5" x2="23" y2="23.5" stroke="#fff" stroke-width="1"/>
+    <line x1="27" y1="17.5" x2="27" y2="22.5" stroke="#fff" stroke-width="1"/>
+  </symbol>
+
+  <symbol id="icon-college-cap" viewBox="0 0 40 40">
+    <polygon points="20,8 36,15 20,22 4,15" fill="url(#gradCollegeCap)" stroke="#000" stroke-width="0.5"/>
+    <rect x="13" y="17" width="14" height="9" rx="1" fill="#1a1d24" stroke="#000" stroke-width="0.5"/>
+    <circle cx="20" cy="15" r="1.6" fill="#ffe38a"/>
+    <line x1="20" y1="15" x2="30" y2="20" stroke="#ffe38a" stroke-width="1.1"/>
+    <circle cx="30" cy="21" r="1.8" fill="#ffe38a"/>
+  </symbol>
+
+  <symbol id="icon-ai-robot" viewBox="0 0 40 40">
+    <rect x="9" y="13" width="22" height="18" rx="6" fill="url(#gradAiRobot)" stroke="#0a4a5c" stroke-width="1.2"/>
+    <rect x="17" y="5" width="6" height="8" rx="2" fill="#1a8fb0"/>
+    <circle cx="20" cy="6" r="2.4" fill="#ffe38a"/>
+    <circle cx="16" cy="22" r="3.2" fill="#0a2530"/>
+    <circle cx="24" cy="22" r="3.2" fill="#0a2530"/>
+    <circle cx="16" cy="22" r="1.3" fill="#bdf4ff"/>
+    <circle cx="24" cy="22" r="1.3" fill="#bdf4ff"/>
+    <line x1="15" y1="28" x2="25" y2="28" stroke="#0a2530" stroke-width="1.6" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="icon-crown" viewBox="0 0 28 22">
+    <path d="M2 20 L2 10 L7 14 L14 4 L21 14 L26 10 L26 20 Z" fill="url(#gradCrownIcon)" stroke="#8a6a00" stroke-width="0.8"/>
+    <circle cx="2" cy="9" r="2" fill="#ffd76a"/>
+    <circle cx="14" cy="3" r="2.2" fill="#ffd76a"/>
+    <circle cx="26" cy="9" r="2" fill="#ffd76a"/>
+  </symbol>
+
+  <symbol id="icon-trophy" viewBox="0 0 64 64">
+    <path d="M20 10h24v14c0 8-6 14-12 14s-12-6-12-14V10z" fill="url(#gradTrophyIcon)" stroke="#8a6a00" stroke-width="0.8"/>
+    <path d="M20 12h-8c0 8 4 13 9 14" stroke="url(#gradTrophyIcon)" stroke-width="3" fill="none"/>
+    <path d="M44 12h8c0 8-4 13-9 14" stroke="url(#gradTrophyIcon)" stroke-width="3" fill="none"/>
+    <rect x="28" y="38" width="8" height="8" fill="url(#gradTrophyIcon)"/>
+    <rect x="22" y="46" width="20" height="6" rx="1" fill="url(#gradTrophyIcon)"/>
+    <rect x="18" y="52" width="28" height="5" rx="1" fill="url(#gradTrophyIcon)"/>
+  </symbol>
+
+  <symbol id="icon-medal-gold" viewBox="0 0 40 48">
+    <polygon points="12,4 20,20 6,20" fill="#c99400"/>
+    <polygon points="28,4 20,20 34,20" fill="#8a6a00"/>
+    <circle cx="20" cy="30" r="13" fill="url(#gradMedalGold)" stroke="#8a6a00" stroke-width="1.2"/>
+    <text x="20" y="35" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="13" fill="#5c4600">1</text>
+  </symbol>
+  <symbol id="icon-medal-silver" viewBox="0 0 40 48">
+    <polygon points="12,4 20,20 6,20" fill="#9aa0aa"/>
+    <polygon points="28,4 20,20 34,20" fill="#6c7078"/>
+    <circle cx="20" cy="30" r="13" fill="url(#gradMedalSilver)" stroke="#6c7078" stroke-width="1.2"/>
+    <text x="20" y="35" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="13" fill="#50545a">2</text>
+  </symbol>
+  <symbol id="icon-medal-bronze" viewBox="0 0 40 48">
+    <polygon points="12,4 20,20 6,20" fill="#8a5a2c"/>
+    <polygon points="28,4 20,20 34,20" fill="#5c3a1a"/>
+    <circle cx="20" cy="30" r="13" fill="url(#gradMedalBronze)" stroke="#5c3a1a" stroke-width="1.2"/>
+    <text x="20" y="35" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="13" fill="#432a12">3</text>
+  </symbol>
+
+  <symbol id="icon-clipboard" viewBox="0 0 40 40">
+    <rect x="8" y="6" width="24" height="30" rx="3" fill="url(#gradClipboard)" stroke="#0a4a28" stroke-width="1.2"/>
+    <rect x="14" y="3" width="12" height="6" rx="2" fill="#0a4a28"/>
+    <path d="M13 20l4 4 10-10" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</defs>
+</svg>
+
+
 <div class="ticker-bar">
   <div class="ticker-track" id="tickerTrack">LOADING PREDICTIONS TRACKER &nbsp;&nbsp;•&nbsp;&nbsp; 2026 NFL SEASON &nbsp;&nbsp;•&nbsp;&nbsp;</div>
 </div>
@@ -1159,22 +1322,22 @@
 
 <div class="quick-nav-row">
   <button class="quick-nav-tile qnt-green" data-target="addFormSection">
-    <span class="qnt-icon">📋</span>
+    <span class="qnt-icon-wrap qnt-icon-green"><svg class="icon-inline" width="26" height="26" viewBox="0 0 40 40"><use href="#icon-clipboard"/></svg></span>
     <span class="qnt-text"><span class="qnt-title">My Picks</span><span class="qnt-sub">Make your predictions</span></span>
     <span class="qnt-arrow">→</span>
   </button>
   <button class="quick-nav-tile qnt-blue" data-target="podiumWrap">
-    <span class="qnt-icon">🏆</span>
+    <span class="qnt-icon-wrap qnt-icon-blue"><svg class="icon-inline" width="26" height="31" viewBox="0 0 64 64"><use href="#icon-trophy"/></svg></span>
     <span class="qnt-text"><span class="qnt-title">Leaderboard</span><span class="qnt-sub">See where you stand</span></span>
     <span class="qnt-arrow">→</span>
   </button>
   <button class="quick-nav-tile qnt-purple" data-target="beatAiWrap">
-    <span class="qnt-icon">🤖</span>
+    <span class="qnt-icon-wrap qnt-icon-purple"><svg class="icon-inline" width="26" height="26" viewBox="0 0 40 40"><use href="#icon-ai-robot"/></svg></span>
     <span class="qnt-text"><span class="qnt-title">Beat the AI</span><span class="qnt-sub">Can you top the algorithm?</span></span>
     <span class="qnt-arrow">→</span>
   </button>
   <button class="quick-nav-tile qnt-red" data-target="collegeWrap">
-    <span class="qnt-icon">🎓</span>
+    <span class="qnt-icon-wrap qnt-icon-red"><svg class="icon-inline" width="26" height="26" viewBox="0 0 40 40"><use href="#icon-college-cap"/></svg></span>
     <span class="qnt-text"><span class="qnt-title">College Pick 6</span><span class="qnt-sub">6 picks. 1 perfect week.</span></span>
     <span class="qnt-arrow">→</span>
   </button>
@@ -1693,7 +1856,7 @@ function renderCollegePick6(){
 
   if(!slate){
     wrap.innerHTML = `
-      <div class="beat-ai-title">🏈 College Pick 6<span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
+      <div class="beat-ai-title">${iconGradCap(18)} College Pick 6<span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
       <div class="beat-ai-empty">This week's slate hasn't been generated yet \u2014 check back after the next scheduled run.</div>
     `;
     return;
@@ -1734,7 +1897,7 @@ function renderCollegePick6(){
   }).join('');
 
   wrap.innerHTML = `
-    <div class="beat-ai-title">🏈 College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
+    <div class="beat-ai-title">${iconGradCap(18)} College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
     ${leaderboardHtml}
     <div class="college-games-grid">${gamesHtml}</div>
   `;
@@ -1762,7 +1925,7 @@ function renderBeatAiBoard(){
 
   if(humanPlayers.length === 0 || !aiHasGradedWeek){
     wrap.innerHTML = `
-      <div class="beat-ai-title">🤖 Beat the AI<span class="beat-ai-sub">Bonus points for getting a pick right in a week the AI whiffed \u2014 doesn't affect the season score</span></div>
+      <div class="beat-ai-title">${iconRobot(18)} Beat the AI<span class="beat-ai-sub">Bonus points for getting a pick right in a week the AI whiffed \u2014 doesn't affect the season score</span></div>
       <div class="beat-ai-empty">Once the AI has at least one graded pick for a week, this board comes alive.</div>
     `;
     return;
@@ -1773,7 +1936,7 @@ function renderBeatAiBoard(){
     .sort((a, b) => b.stats.bonus - a.stats.bonus);
 
   wrap.innerHTML = `
-    <div class="beat-ai-title">🤖 Beat the AI<span class="beat-ai-sub">Bonus points for getting a pick right in a week the AI whiffed \u2014 doesn't affect the season score</span></div>
+    <div class="beat-ai-title">${iconRobot(18)} Beat the AI<span class="beat-ai-sub">Bonus points for getting a pick right in a week the AI whiffed \u2014 doesn't affect the season score</span></div>
     ${ranked.map((r, i) => `
       <div class="beat-ai-row">
         <div class="beat-ai-rank">#${i+1}</div>
@@ -1829,25 +1992,33 @@ function renderCountdowns(){
   strip.innerHTML = `
     ${nfl ? `
       <div class="countdown-item">
-        <span class="countdown-icon">🏈</span>
+        <div class="countdown-icon-badge">${iconFootball(30)}</div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
           <div class="countdown-label">${escapeHtml(nfl.matchup)}</div>
           <div class="countdown-time">${formatCountdown(nfl.kickoffISO)}</div>
+          <button class="countdown-cta countdown-cta-nfl" data-target="addFormSection">View all picks →</button>
         </div>
       </div>
     ` : ''}
     ${college ? `
       <div class="countdown-item countdown-college">
-        <span class="countdown-icon">🎓</span>
+        <div class="countdown-icon-badge countdown-icon-badge-college">${iconGradCap(28)}</div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
           <div class="countdown-label">${escapeHtml(college.matchup)}</div>
           <div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>
+          <button class="countdown-cta countdown-cta-college" data-target="collegeWrap">View College Pick 6 →</button>
         </div>
       </div>
     ` : ''}
   `;
+  strip.querySelectorAll('.countdown-cta').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 }
 
 function renderPlayerOptions(){
@@ -1899,9 +2070,9 @@ function renderPlayers(){
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
         ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
-          ${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}
+          ${p.photo ? '' : (p.isAI ? iconRobot(30) : initials(p.name))}
           ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
-          ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect College Pick 6 week${perfectWeeks === 1 ? '' : 's'}">🏆</span>` : ''}
+          ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect College Pick 6 week${perfectWeeks === 1 ? '' : 's'}">${iconTrophyMini(16)}</span>` : ''}
         </label>
         <div class="player-meta">
           <div class="player-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
@@ -1999,14 +2170,14 @@ function renderPredictions(){
         <td data-label="Week"><span class="week-chip">${row.week}</span></td>
         <td data-label="Player">
           <div class="cell-player">
-            <div class="cell-avatar ${cellAiClass}" ${avatarStyle}>${player && player.photo ? '' : (player && player.isAI ? '🤖' : initials(player ? player.name : '?'))}</div>
+            <div class="cell-avatar ${cellAiClass}" ${avatarStyle}>${player && player.photo ? '' : (player && player.isAI ? iconRobot(20) : initials(player ? player.name : '?'))}</div>
             ${player ? escapeHtml(player.name) : '<em style="color:var(--grey)">Removed</em>'}
           </div>
         </td>
         <td data-label="Prediction">
           <textarea class="pred-text-input" rows="1">${escapeHtml(row.text)}</textarea>
           ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.nickname || addedByPlayer.name)}</div>` : ''}
-          ${isAutoAiPick ? `<div class="added-by-tag ai-tag">🤖 AI predicted</div>` : ''}
+          ${isAutoAiPick ? `<div class="added-by-tag ai-tag">${iconRobot(12)} AI predicted</div>` : ''}
           ${row.general ? `<div class="general-tag">📋 General prediction (no points)</div>` : ''}
           <div class="comment-row">
             <input type="text" class="comment-input" maxlength="80" placeholder="💬 Add a comment..." value="${escapeAttr(row.comment || '')}">
@@ -2088,16 +2259,15 @@ function renderPodium(){
   const wrap = $('podiumWrap');
   const scoredPlayers = players.filter(p => scoreFor(p.id) > 0);
   if(scoredPlayers.length === 0){
-    wrap.innerHTML = `<div class="podium-title">Leaderboard</div><div class="beat-ai-empty">No points on the board yet \u2014 the podium fills in once someone gets a pick right.</div>`;
+    wrap.innerHTML = `<div class="podium-title">${iconTrophyMini(18)} Leaderboard</div><div class="beat-ai-empty">No points on the board yet \u2014 the podium fills in once someone gets a pick right.</div>`;
     wrap.style.display = 'block';
     return;
   }
   wrap.style.display = 'block';
   const ranked = [...scoredPlayers].sort((a,b) => scoreFor(b.id) - scoreFor(a.id)).slice(0,3);
-  const medals = ['🥇','🥈','🥉'];
   const order = ranked.length === 3 ? [1,0,2] : ranked.map((_,i)=>i);
   const slotClass = ['p2','p1','p3'];
-  wrap.innerHTML = `<div class="podium-title">Leaderboard</div><div class="podium-row">` +
+  wrap.innerHTML = `<div class="podium-title">${iconTrophyMini(18)} Leaderboard</div><div class="podium-row">` +
     order.map((rankIdx, visualIdx) => {
       const p = ranked[rankIdx];
       if(!p) return '';
@@ -2106,9 +2276,11 @@ function renderPodium(){
       const podiumAiClass = p.isAI ? 'avatar-ai' : '';
       return `
         <div class="podium-slot ${cls}">
-          ${rankIdx === 0 ? '<div class="podium-crown">👑</div>' : ''}
-          <div class="podium-medal">${medals[rankIdx]}</div>
-          <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}</div>
+          ${rankIdx === 0 ? `<div class="podium-crown">${iconCrown(22)}</div>` : ''}
+          <div class="podium-medal">${iconMedal(rankIdx+1, rankIdx === 0 ? 36 : 28)}</div>
+          <div class="podium-avatar-frame ${cls}">
+            <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? iconRobot(24) : initials(p.name))}</div>
+          </div>
           <div class="podium-name">${escapeHtml(p.nickname || p.name)}${streakBadgeHtml(p.id)}</div>
           <div class="podium-score">${scoreFor(p.id)} pts</div>
           <div class="podium-bar">#${rankIdx+1}</div>
@@ -2197,6 +2369,113 @@ $('finishBtn').addEventListener('click', async () => {
   render();
   fireConfetti();
 });
+
+// ====== ILLUSTRATED ICONS (replace flat emoji with real vector art) ======
+function iconFootball(size){
+  const s = size || 20;
+  return `<svg width="${s}" height="${s*0.65}" viewBox="0 0 40 26" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <linearGradient id="ballGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c17a45"/>
+        <stop offset="55%" stop-color="#8a4a2b"/>
+        <stop offset="100%" stop-color="#5c2f18"/>
+      </linearGradient>
+    </defs>
+    <path d="M2 13c0-7 8-12 18-12s18 5 18 12-8 12-18 12S2 20 2 13z" fill="url(#ballGrad)" stroke="#3d1f10" stroke-width="1"/>
+    <path d="M2 13c0-7 8-12 18-12s18 5 18 12" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+    <line x1="12" y1="13" x2="28" y2="13" stroke="#f0e6d8" stroke-width="1.3"/>
+    <line x1="16" y1="10" x2="16" y2="16" stroke="#f0e6d8" stroke-width="1"/>
+    <line x1="20" y1="9.5" x2="20" y2="16.5" stroke="#f0e6d8" stroke-width="1"/>
+    <line x1="24" y1="10" x2="24" y2="16" stroke="#f0e6d8" stroke-width="1"/>
+  </svg>`;
+}
+function iconGradCap(size){
+  const s = size || 20;
+  return `<svg width="${s}" height="${s*0.85}" viewBox="0 0 40 34" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2be08a"/>
+        <stop offset="100%" stop-color="#0a5c33"/>
+      </linearGradient>
+    </defs>
+    <path d="M20 4 L38 12 L20 20 L2 12 Z" fill="url(#capGrad)" stroke="#0a3d22" stroke-width="1"/>
+    <path d="M11 15v8c0 2.5 4 5 9 5s9-2.5 9-5v-8" fill="none" stroke="#0a5c33" stroke-width="1.8"/>
+    <line x1="34" y1="13" x2="34" y2="24" stroke="#ffe38a" stroke-width="1.4"/>
+    <circle cx="34" cy="26" r="2" fill="#ffe38a"/>
+  </svg>`;
+}
+function iconRobot(size){
+  const s = size || 20;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <linearGradient id="botGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7fe3ff"/>
+        <stop offset="100%" stop-color="#1a8fb5"/>
+      </linearGradient>
+    </defs>
+    <line x1="16" y1="3" x2="16" y2="7" stroke="#4fd1ff" stroke-width="1.6"/>
+    <circle cx="16" cy="2.5" r="1.8" fill="#4fd1ff"/>
+    <rect x="6" y="7" width="20" height="17" rx="5" fill="url(#botGrad)" stroke="#0d5a75" stroke-width="1"/>
+    <circle cx="12" cy="15" r="2.4" fill="#04222c"/>
+    <circle cx="20" cy="15" r="2.4" fill="#04222c"/>
+    <rect x="10" y="20" width="12" height="2" rx="1" fill="#04222c" opacity="0.6"/>
+    <rect x="2" y="13" width="3" height="6" rx="1.5" fill="#1a8fb5"/>
+    <rect x="27" y="13" width="3" height="6" rx="1.5" fill="#1a8fb5"/>
+  </svg>`;
+}
+function iconCrown(size){
+  const s = size || 22;
+  return `<svg width="${s}" height="${s*0.78}" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <linearGradient id="crownGrad2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffe38a"/>
+        <stop offset="100%" stop-color="#c99400"/>
+      </linearGradient>
+    </defs>
+    <path d="M2 20 L2 10 L7 14 L14 4 L21 14 L26 10 L26 20 Z" fill="url(#crownGrad2)" stroke="#8a6a00" stroke-width="0.8"/>
+    <circle cx="2" cy="9" r="2" fill="#ffd76a"/>
+    <circle cx="14" cy="3" r="2.2" fill="#ffd76a"/>
+    <circle cx="26" cy="9" r="2" fill="#ffd76a"/>
+  </svg>`;
+}
+function iconTrophyMini(size){
+  const s = size || 20;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <linearGradient id="trophyGradMini" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffe38a"/>
+        <stop offset="100%" stop-color="#c99400"/>
+      </linearGradient>
+    </defs>
+    <path d="M10 5h12v7c0 4-3 7-6 7s-6-3-6-7V5z" fill="url(#trophyGradMini)"/>
+    <path d="M10 6H5c0 4 2 6.5 4.5 7" stroke="url(#trophyGradMini)" stroke-width="1.6" fill="none"/>
+    <path d="M22 6h5c0 4-2 6.5-4.5 7" stroke="url(#trophyGradMini)" stroke-width="1.6" fill="none"/>
+    <rect x="14" y="19" width="4" height="4" fill="url(#trophyGradMini)"/>
+    <rect x="11" y="23" width="10" height="3" rx="1" fill="url(#trophyGradMini)"/>
+    <rect x="9" y="26" width="14" height="2.5" rx="1" fill="url(#trophyGradMini)"/>
+  </svg>`;
+}
+function iconMedal(rank, size){
+  const s = size || 30;
+  const colors = {
+    1: ['#ffe38a', '#c99400', '#8a6a00'],
+    2: ['#e8ebee', '#b8bec7', '#7a808a'],
+    3: ['#e0a468', '#a86a30', '#6b3f1a']
+  };
+  const c = colors[rank] || colors[3];
+  return `<svg width="${s}" height="${s}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <linearGradient id="medalGrad${rank}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c[0]}"/>
+        <stop offset="100%" stop-color="${c[1]}"/>
+      </linearGradient>
+    </defs>
+    <path d="M14 4h12l-4 12h-4z" fill="${c[1]}"/>
+    <circle cx="20" cy="24" r="14" fill="url(#medalGrad${rank})" stroke="${c[2]}" stroke-width="1.4"/>
+    <circle cx="20" cy="24" r="10.5" fill="none" stroke="${c[2]}" stroke-width="1" opacity="0.5"/>
+    <text x="20" y="29" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="13" fill="${c[2]}">${rank}</text>
+  </svg>`;
+}
 
 function escapeHtml(str){
   return (str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2317,6 +2596,13 @@ document.querySelectorAll('.quick-nav-tile').forEach(tile => {
     const target = document.getElementById(tile.dataset.target);
     if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+});
+
+$('countdownStrip').addEventListener('click', (e) => {
+  const btn = e.target.closest('.countdown-cta');
+  if(!btn) return;
+  const target = document.getElementById(btn.dataset.target);
+  if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 </script>
 
