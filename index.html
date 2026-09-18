@@ -184,11 +184,10 @@
     border-radius:4px;
     padding:10px 12px;
     margin-bottom:10px;
-    cursor:pointer;
     position:relative;
     transition: border-color 0.15s ease, background 0.15s ease;
   }
-  .player-card:hover{ background:#20242c; }
+  .player-card:hover .player-remove{ opacity:1; }
   .player-card.active{ border-left-color: var(--red); background:#20242c; }
   .player-card.rank-1{ border-left-color: var(--gold); }
   .rank-badge{
@@ -1370,16 +1369,6 @@ function renderPlayers(){
     });
   });
 
-  list.querySelectorAll('.player-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-      if(e.target.closest('[data-remove-player]') || e.target.closest('.avatar') || e.target.closest('[data-stats-for]')) return;
-      const id = card.dataset.id;
-      activePlayerFilter = activePlayerFilter === id ? 'all' : id;
-      $('filterPlayer').value = activePlayerFilter;
-      renderPlayers();
-      renderPredictions();
-    });
-  });
   list.querySelectorAll('[data-remove-player]').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
