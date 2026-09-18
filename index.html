@@ -74,7 +74,7 @@
   }
   .countdown-icon-badge{
     flex-shrink:0;
-    width:56px; height:56px;
+    width:68px; height:68px;
     border-radius:12px;
     display:flex; align-items:center; justify-content:center;
     background: linear-gradient(160deg, rgba(228,0,43,0.25), rgba(0,0,0,0.3));
@@ -167,7 +167,7 @@
   }
   .quick-nav-tile:hover{ transform: translateY(-3px); }
   .qnt-icon-wrap{
-    width:44px; height:44px;
+    width:56px; height:56px;
     flex-shrink:0;
     border-radius:50%;
     display:flex; align-items:center; justify-content:center;
@@ -302,7 +302,15 @@
     margin-top:6px;
   }
   .wordmark-crown{ margin-bottom:2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6)); }
-  .lounge-logo-img{ height:62px; width:auto; display:block; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6)); }
+  .lounge-logo-img{ height:82px; width:auto; display:block; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6)); }
+  .section-banner{
+    width:100%;
+    max-height:140px;
+    object-fit:cover;
+    border-radius:8px;
+    margin-bottom:14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
   .masthead-tagline{
     font-family: var(--font-display);
     font-weight:600;
@@ -396,7 +404,7 @@
   }
   .player-card.rank-1 .rank-badge{ background: linear-gradient(135deg, #ffe38a, #c99400); box-shadow: 0 2px 8px rgba(255,184,28,0.5), inset 0 1px 0 rgba(255,255,255,0.4); }
   .avatar{
-    width:64px; height:64px;
+    width:76px; height:76px;
     border-radius:50%;
     background: #2a2e37;
     background-size:cover;
@@ -405,7 +413,7 @@
     display:flex; align-items:center; justify-content:center;
     font-family: var(--font-display);
     font-weight:600;
-    font-size:20px;
+    font-size:24px;
     color: var(--grey);
     border:2px solid var(--line);
     overflow:visible;
@@ -747,11 +755,11 @@
 
   .cell-player{ display:flex; align-items:center; gap:8px; white-space:nowrap; }
   .cell-avatar{
-    width:36px; height:36px; border-radius:50%;
+    width:42px; height:42px; border-radius:50%;
     background:#2a2e37; background-size:cover; background-position:center;
     flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
-    font-size:12px; font-weight:700; color:var(--grey);
+    font-size:13px; font-weight:700; color:var(--grey);
     font-family: var(--font-display);
   }
   .week-chip{
@@ -932,15 +940,15 @@
   .podium-avatar-frame.p2{ background: linear-gradient(135deg, #e8ebee, #9aa0aa); }
   .podium-avatar-frame.p3{ background: linear-gradient(135deg, #e0a468, #8a5a2e); }
   .podium-avatar{
-    width:72px; height:72px;
+    width:84px; height:84px;
     border-radius:50%;
     background:#2a2e37;
     background-size:cover; background-position:center;
     display:flex; align-items:center; justify-content:center;
-    font-family: var(--font-display); font-weight:700; font-size:22px; color:var(--grey);
+    font-family: var(--font-display); font-weight:700; font-size:26px; color:var(--grey);
     border:2px solid #0c0c0e;
   }
-  .podium-avatar-frame.p1 .podium-avatar{ width:88px; height:88px; font-size:26px; }
+  .podium-avatar-frame.p1 .podium-avatar{ width:102px; height:102px; font-size:30px; }
   .podium-medal{ display:flex; justify-content:center; margin-bottom:2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
   .podium-crown{
     display:flex; justify-content:center;
@@ -1264,7 +1272,7 @@
 
 <header class="masthead">
   <div class="masthead-left">
-    <img id="proBadgeImg" class="badge-crest" width="52" height="52" alt="Pro Football">
+    <img id="proBadgeImg" class="badge-crest" width="66" height="66" alt="Pro Football">
     <div>
       <img id="loungeLogoImg" class="lounge-logo-img" alt="The Lounge">
       <div class="masthead-sub">2026 NFL Predictions &middot; Everyone can add, edit, and grade picks</div>
@@ -1276,7 +1284,7 @@
         <button class="btn btn-primary" id="finishBtn">Finish season &amp; crown champion</button>
         <button class="btn btn-ghost" id="resetBtn">Reset all data</button>
       </div>
-      <img id="collegeBadgeImg" class="badge-crest" width="52" height="52" alt="College Football">
+      <img id="collegeBadgeImg" class="badge-crest" width="66" height="66" alt="College Football">
     </div>
   </div>
 </header>
@@ -1285,22 +1293,22 @@
 
 <div class="quick-nav-row">
   <button class="quick-nav-tile qnt-green" data-target="addFormSection">
-    <span class="qnt-icon-wrap qnt-icon-green"><img id="qntPickIcon" width="26" height="26" alt=""></span>
+    <span class="qnt-icon-wrap qnt-icon-green"><img id="qntPickIcon" width="34" height="34" alt=""></span>
     <span class="qnt-text"><span class="qnt-title">My Picks</span><span class="qnt-sub">Make your predictions</span></span>
     <span class="qnt-arrow">→</span>
   </button>
   <button class="quick-nav-tile qnt-blue" data-target="podiumWrap">
-    <span class="qnt-icon-wrap qnt-icon-blue"><img id="qntTrophyIcon" width="26" height="26" alt=""></span>
+    <span class="qnt-icon-wrap qnt-icon-blue"><img id="qntTrophyIcon" width="34" height="34" alt=""></span>
     <span class="qnt-text"><span class="qnt-title">Leaderboard</span><span class="qnt-sub">See where you stand</span></span>
     <span class="qnt-arrow">→</span>
   </button>
   <button class="quick-nav-tile qnt-purple" data-target="beatAiWrap">
-    <span class="qnt-icon-wrap qnt-icon-purple"><img id="qntAiIcon" width="26" height="26" alt=""></span>
+    <span class="qnt-icon-wrap qnt-icon-purple"><img id="qntAiIcon" width="34" height="34" alt=""></span>
     <span class="qnt-text"><span class="qnt-title">Beat the AI</span><span class="qnt-sub">Can you top the algorithm?</span></span>
     <span class="qnt-arrow">→</span>
   </button>
   <button class="quick-nav-tile qnt-red" data-target="collegeWrap">
-    <span class="qnt-icon-wrap qnt-icon-red"><img id="qntCollegeIcon" width="26" height="26" alt=""></span>
+    <span class="qnt-icon-wrap qnt-icon-red"><img id="qntCollegeIcon" width="34" height="34" alt=""></span>
     <span class="qnt-text"><span class="qnt-title">College Pick 6</span><span class="qnt-sub">6 picks. 1 perfect week.</span></span>
     <span class="qnt-arrow">→</span>
   </button>
@@ -1325,8 +1333,10 @@
 
     <div class="beat-ai-wrap" id="beatAiWrap"></div>
 
+    <img id="collegeBannerImg" class="section-banner" alt="College Football">
     <div class="beat-ai-wrap college-wrap" id="collegeWrap"></div>
 
+    <img id="proBannerImg" class="section-banner" alt="Pro Football">
     <div class="add-form" id="addFormSection">
       <div class="add-form-title">Add a prediction</div>
       <div class="form-grid">
@@ -1955,7 +1965,7 @@ function renderCountdowns(){
   strip.innerHTML = `
     ${nfl ? `
       <div class="countdown-item">
-        <div class="countdown-icon-badge"><img src="${ICON_FOOTBALL}" width="36" height="36" style="border-radius:6px; object-fit:cover;"></div>
+        <div class="countdown-icon-badge"><img src="${ICON_FOOTBALL}" width="46" height="46" style="border-radius:6px; object-fit:cover;"></div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
           <div class="countdown-label">${escapeHtml(nfl.matchup)}</div>
@@ -1966,7 +1976,7 @@ function renderCountdowns(){
     ` : ''}
     ${college ? `
       <div class="countdown-item countdown-college">
-        <div class="countdown-icon-badge countdown-icon-badge-college"><img src="${ICON_COLLEGE_BADGE}" width="36" height="36" style="border-radius:6px; object-fit:cover;"></div>
+        <div class="countdown-icon-badge countdown-icon-badge-college"><img src="${ICON_COLLEGE_BADGE}" width="46" height="46" style="border-radius:6px; object-fit:cover;"></div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
           <div class="countdown-label">${escapeHtml(college.matchup)}</div>
@@ -2033,7 +2043,7 @@ function renderPlayers(){
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
         ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
-          ${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="56" height="56" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}
+          ${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="68" height="68" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}
           ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
           ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect College Pick 6 week${perfectWeeks === 1 ? '' : 's'}"><img src="${ICON_TROPHY}" width="18" height="18"></span>` : ''}
         </label>
@@ -2133,14 +2143,14 @@ function renderPredictions(){
         <td data-label="Week"><span class="week-chip">${row.week}</span></td>
         <td data-label="Player">
           <div class="cell-player">
-            <div class="cell-avatar ${cellAiClass}" ${avatarStyle}>${player && player.photo ? '' : (player && player.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="32" height="32" style="border-radius:50%; object-fit:cover;">' : initials(player ? player.name : '?'))}</div>
+            <div class="cell-avatar ${cellAiClass}" ${avatarStyle}>${player && player.photo ? '' : (player && player.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="38" height="38" style="border-radius:50%; object-fit:cover;">' : initials(player ? player.name : '?'))}</div>
             ${player ? escapeHtml(player.name) : '<em style="color:var(--grey)">Removed</em>'}
           </div>
         </td>
         <td data-label="Prediction">
           <textarea class="pred-text-input" rows="1">${escapeHtml(row.text)}</textarea>
           ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.nickname || addedByPlayer.name)}</div>` : ''}
-          ${isAutoAiPick ? `<div class="added-by-tag ai-tag"><img src="${ICON_AI_AVATAR}" width="14" height="14" style="vertical-align:-2px; border-radius:3px;"> AI predicted</div>` : ''}
+          ${isAutoAiPick ? `<div class="added-by-tag ai-tag"><img src="${ICON_AI_AVATAR}" width="16" height="16" style="vertical-align:-3px; border-radius:3px;"> AI predicted</div>` : ''}
           ${row.general ? `<div class="general-tag">📋 General prediction (no points)</div>` : ''}
           <div class="comment-row">
             <input type="text" class="comment-input" maxlength="80" placeholder="💬 Add a comment..." value="${escapeAttr(row.comment || '')}">
@@ -2239,10 +2249,10 @@ function renderPodium(){
       const podiumAiClass = p.isAI ? 'avatar-ai' : '';
       return `
         <div class="podium-slot ${cls}">
-          ${rankIdx === 0 ? `<div class="podium-crown"><img src="${ICON_RANK_CROWN}" width="28" height="28"></div>` : ''}
-          <div class="podium-medal"><img src="${[ICON_MEDAL_1, ICON_MEDAL_2, ICON_MEDAL_3][rankIdx]}" width="${rankIdx === 0 ? 40 : 32}" height="${rankIdx === 0 ? 40 : 32}"></div>
+          ${rankIdx === 0 ? `<div class="podium-crown"><img src="${ICON_RANK_CROWN}" width="34" height="34"></div>` : ''}
+          <div class="podium-medal"><img src="${[ICON_MEDAL_1, ICON_MEDAL_2, ICON_MEDAL_3][rankIdx]}" width="${rankIdx === 0 ? 48 : 38}" height="${rankIdx === 0 ? 48 : 38}"></div>
           <div class="podium-avatar-frame ${cls}">
-            <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="44" height="44" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}</div>
+            <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="54" height="54" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}</div>
           </div>
           <div class="podium-name">${escapeHtml(p.nickname || p.name)}${streakBadgeHtml(p.id)}</div>
           <div class="podium-score">${scoreFor(p.id)} pts</div>
@@ -2601,6 +2611,8 @@ $('qntTrophyIcon').src = ICON_TROPHY;
 $('qntAiIcon').src = BEAT_AI_BADGE2;
 $('qntCollegeIcon').src = ICON_COLLEGE_BADGE;
 $('loungeLogoImg').src = LOUNGE_LOGO;
+$('proBannerImg').src = PRO_BANNER;
+$('collegeBannerImg').src = COLLEGE_BANNER;
 
 document.querySelector('header.masthead').style.backgroundImage =
   'linear-gradient(180deg, rgba(10,22,16,0.55) 0%, rgba(10,22,16,0.75) 55%, rgba(10,22,16,0.92) 100%), url("' + STADIUM_BG + '")';
