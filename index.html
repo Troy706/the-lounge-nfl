@@ -1343,7 +1343,7 @@ function renderPlayers(){
     const statsOpen = expandedPlayerId === p.id;
     return `
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
-        <div class="rank-badge">${idx+1}</div>
+        ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
           ${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}
           ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
