@@ -652,7 +652,7 @@
   .streak-cold{ background: rgba(228,0,43,0.15); color: var(--red); }
 
   /* ---------- Reactions ---------- */
-  .reactions{ display:flex; gap:4px; }
+  .reactions{ display:flex; gap:4px; flex-wrap:wrap; }
   .reaction-btn{
     background: var(--panel-raised);
     border:1px solid var(--line);
@@ -1229,6 +1229,8 @@ function renderPredictions(){
             <button class="reaction-btn" data-reaction="fire">🔥 <span class="reaction-count">${(row.reactions && row.reactions.fire) || 0}</span></button>
             <button class="reaction-btn" data-reaction="skull">💀 <span class="reaction-count">${(row.reactions && row.reactions.skull) || 0}</span></button>
             <button class="reaction-btn" data-reaction="clap">👏 <span class="reaction-count">${(row.reactions && row.reactions.clap) || 0}</span></button>
+            <button class="reaction-btn" data-reaction="laugh">😂 <span class="reaction-count">${(row.reactions && row.reactions.laugh) || 0}</span></button>
+            <button class="reaction-btn" data-reaction="shock">😱 <span class="reaction-count">${(row.reactions && row.reactions.shock) || 0}</span></button>
           </div>
         </td>
         <td data-label=""><button class="row-remove" title="Delete prediction">✕</button></td>
