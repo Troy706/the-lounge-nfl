@@ -25,6 +25,7 @@
     --font-body: 'Inter', -apple-system, sans-serif;
   }
   *{box-sizing:border-box;}
+  html{ scroll-behavior: smooth; }
   body{
     margin:0;
     background:
@@ -41,51 +42,124 @@
 
   /* ---------- Countdown strip ---------- */
   .countdown-strip{
-    display:flex;
-    gap:0;
-    background: #0a140d;
-    background-image:
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 64px),
-      linear-gradient(180deg, #102315 0%, #0a140d 100%);
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+    padding:14px 20px;
+    background: var(--ink);
     border-bottom:1px solid var(--line);
-    overflow:hidden;
-    flex-wrap:wrap;
+  }
+  @media (max-width: 760px){
+    .countdown-strip{ grid-template-columns: 1fr; }
   }
   .countdown-item{
-    flex:1;
-    min-width:220px;
+    position:relative;
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:9px 18px;
-    border-right:1px solid rgba(255,255,255,0.08);
+    gap:14px;
+    padding:16px 18px;
+    border-radius:8px;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(228,0,43,0.22) 0%, transparent 55%),
+      linear-gradient(135deg, #1a0a0d 0%, #0c0c0e 60%);
+    border:1px solid rgba(228,0,43,0.3);
   }
-  .countdown-item:last-child{ border-right:none; }
-  .countdown-icon{ font-size:18px; flex-shrink:0; }
+  .countdown-item.countdown-college{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(31,191,117,0.22) 0%, transparent 55%),
+      linear-gradient(135deg, #0a1a10 0%, #0c0c0e 60%);
+    border-color: rgba(31,191,117,0.3);
+  }
+  .countdown-icon{ font-size:30px; flex-shrink:0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+  .countdown-body{ flex:1; min-width:0; }
+  .countdown-eyebrow{
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--red);
+    margin-bottom:3px;
+  }
+  .countdown-college .countdown-eyebrow{ color: var(--green); }
   .countdown-label{
-    font-family: var(--font-body);
-    font-size:11px;
-    color: rgba(255,255,255,0.75);
-    flex:1;
-    min-width:0;
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:14px;
+    color: var(--white);
+    white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    white-space:nowrap;
+    margin-bottom:4px;
   }
   .countdown-time{
     font-family: var(--font-display);
     font-weight:700;
-    font-size:13px;
+    font-size:20px;
     color: var(--gold);
-    flex-shrink:0;
     letter-spacing:0.02em;
   }
   .countdown-item.countdown-college .countdown-time{ color: var(--green); }
   .countdown-empty{
-    padding:9px 18px;
-    font-size:11px;
+    padding:14px 18px;
+    font-size:12px;
     color: var(--grey);
+    grid-column: 1 / -1;
   }
+
+  /* ---------- Quick-nav tile row ---------- */
+  .quick-nav-row{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:10px;
+    padding:14px 20px;
+    background: var(--ink);
+    border-bottom:1px solid var(--line);
+  }
+  @media (max-width: 760px){
+    .quick-nav-row{ grid-template-columns: repeat(2, 1fr); padding:12px; }
+  }
+  .quick-nav-tile{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-top:3px solid var(--line);
+    border-radius:6px;
+    padding:12px 14px;
+    cursor:pointer;
+    text-align:left;
+    transition: transform 0.12s ease, border-color 0.15s ease;
+  }
+  .quick-nav-tile:hover{ transform: translateY(-2px); }
+  .qnt-icon{ font-size:22px; flex-shrink:0; }
+  .qnt-text{ display:flex; flex-direction:column; flex:1; min-width:0; }
+  .qnt-title{
+    font-family: var(--font-display);
+    font-weight:700;
+    text-transform:uppercase;
+    font-size:12px;
+    letter-spacing:0.03em;
+    color: var(--white);
+  }
+  .qnt-sub{
+    font-size:10px;
+    color: var(--grey);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .qnt-arrow{ color: var(--grey); font-size:14px; flex-shrink:0; }
+  .qnt-green{ border-top-color: var(--green); }
+  .qnt-green:hover{ border-top-color: var(--green); box-shadow: 0 4px 14px rgba(31,191,117,0.25); }
+  .qnt-blue{ border-top-color: var(--gold); }
+  .qnt-blue:hover{ border-top-color: var(--gold); box-shadow: 0 4px 14px rgba(255,184,28,0.25); }
+  .qnt-purple{ border-top-color: #4fd1ff; }
+  .qnt-purple:hover{ border-top-color: #4fd1ff; box-shadow: 0 4px 14px rgba(79,209,255,0.25); }
+  .qnt-red{ border-top-color: var(--red); }
+  .qnt-red:hover{ border-top-color: var(--red); box-shadow: 0 4px 14px rgba(228,0,43,0.25); }
 
   /* ---------- Ticker header ---------- */
   .ticker-bar{
@@ -180,6 +254,15 @@
     color: rgba(255,255,255,0.6);
     font-size:13px;
     margin-top:6px;
+  }
+  .wordmark-crown{ margin-bottom:2px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6)); }
+  .masthead-tagline{
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    letter-spacing:0.14em;
+    color: var(--gold);
+    margin-top:2px;
   }
   .badge-crest{ flex-shrink:0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
   .btn{
@@ -710,8 +793,12 @@
 
   /* ---------- Champion banner ---------- */
   .trophy-banner{
-    background: linear-gradient(135deg, #241a06 0%, #1c1408 60%, #15171c 100%);
+    position:relative;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(255,184,28,0.18) 0%, transparent 55%),
+      linear-gradient(135deg, #241a06 0%, #1c1408 60%, #15171c 100%);
     border:1px solid var(--gold);
+    box-shadow: 0 0 24px rgba(255,184,28,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
     border-radius:8px;
     padding:22px 24px;
     margin-bottom:22px;
@@ -719,6 +806,7 @@
     align-items:center;
     gap:18px;
     flex-wrap:wrap;
+    overflow:hidden;
   }
   .trophy-banner svg{ flex-shrink:0; }
   .trophy-copy{ flex:1; min-width:200px; }
@@ -789,6 +877,16 @@
   .podium-slot.p2 .podium-avatar{ border-color:#c7c9cd; }
   .podium-slot.p3 .podium-avatar{ border-color:#c68a4e; }
   .podium-medal{ font-size:22px; margin-bottom:4px; }
+  .podium-crown{
+    font-size:20px;
+    margin-bottom:-4px;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    animation: crown-bob 2.4s ease-in-out infinite;
+  }
+  @keyframes crown-bob{
+    0%, 100%{ transform: translateY(0); }
+    50%{ transform: translateY(-3px); }
+  }
   .podium-name{ font-weight:600; font-size:13px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
   .podium-score{ font-family: var(--font-display); font-weight:700; color: var(--gold); font-size:15px; margin-top:2px; }
   .podium-bar{
@@ -1014,7 +1112,22 @@
       <text x="26" y="38" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="7" fill="#fff" letter-spacing="1">PRO</text>
     </svg>
     <div>
+      <div class="wordmark-crown">
+        <svg width="26" height="20" viewBox="0 0 28 22" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffe38a"/>
+              <stop offset="100%" stop-color="#c99400"/>
+            </linearGradient>
+          </defs>
+          <path d="M2 20 L2 10 L7 14 L14 4 L21 14 L26 10 L26 20 Z" fill="url(#crownGrad)" stroke="#8a6a00" stroke-width="0.8"/>
+          <circle cx="2" cy="9" r="2" fill="#ffd76a"/>
+          <circle cx="14" cy="3" r="2.2" fill="#ffd76a"/>
+          <circle cx="26" cy="9" r="2" fill="#ffd76a"/>
+        </svg>
+      </div>
       <div class="masthead-title">THE <span>LOUNGE</span></div>
+      <div class="masthead-tagline">PICKS &bull; TRASH TALK &bull; BRAGGING RIGHTS</div>
       <div class="masthead-sub">2026 NFL Predictions &middot; Everyone can add, edit, and grade picks</div>
     </div>
   </div>
@@ -1043,6 +1156,29 @@
 </header>
 
 <div class="countdown-strip" id="countdownStrip"></div>
+
+<div class="quick-nav-row">
+  <button class="quick-nav-tile qnt-green" data-target="addFormSection">
+    <span class="qnt-icon">📋</span>
+    <span class="qnt-text"><span class="qnt-title">My Picks</span><span class="qnt-sub">Make your predictions</span></span>
+    <span class="qnt-arrow">→</span>
+  </button>
+  <button class="quick-nav-tile qnt-blue" data-target="podiumWrap">
+    <span class="qnt-icon">🏆</span>
+    <span class="qnt-text"><span class="qnt-title">Leaderboard</span><span class="qnt-sub">See where you stand</span></span>
+    <span class="qnt-arrow">→</span>
+  </button>
+  <button class="quick-nav-tile qnt-purple" data-target="beatAiWrap">
+    <span class="qnt-icon">🤖</span>
+    <span class="qnt-text"><span class="qnt-title">Beat the AI</span><span class="qnt-sub">Can you top the algorithm?</span></span>
+    <span class="qnt-arrow">→</span>
+  </button>
+  <button class="quick-nav-tile qnt-red" data-target="collegeWrap">
+    <span class="qnt-icon">🎓</span>
+    <span class="qnt-text"><span class="qnt-title">College Pick 6</span><span class="qnt-sub">6 picks. 1 perfect week.</span></span>
+    <span class="qnt-arrow">→</span>
+  </button>
+</div>
 
 <div class="layout">
   <aside class="rail">
@@ -1691,8 +1827,26 @@ function renderCountdowns(){
     return;
   }
   strip.innerHTML = `
-    ${nfl ? `<div class="countdown-item"><span class="countdown-icon">🏈</span><span class="countdown-label">${escapeHtml(nfl.matchup)}</span><span class="countdown-time">${formatCountdown(nfl.kickoffISO)}</span></div>` : ''}
-    ${college ? `<div class="countdown-item countdown-college"><span class="countdown-icon">🎓</span><span class="countdown-label">${escapeHtml(college.matchup)}</span><span class="countdown-time">${formatCountdown(college.kickoffISO)}</span></div>` : ''}
+    ${nfl ? `
+      <div class="countdown-item">
+        <span class="countdown-icon">🏈</span>
+        <div class="countdown-body">
+          <div class="countdown-eyebrow">Marquee NFL matchup</div>
+          <div class="countdown-label">${escapeHtml(nfl.matchup)}</div>
+          <div class="countdown-time">${formatCountdown(nfl.kickoffISO)}</div>
+        </div>
+      </div>
+    ` : ''}
+    ${college ? `
+      <div class="countdown-item countdown-college">
+        <span class="countdown-icon">🎓</span>
+        <div class="countdown-body">
+          <div class="countdown-eyebrow">Marquee college matchup</div>
+          <div class="countdown-label">${escapeHtml(college.matchup)}</div>
+          <div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>
+        </div>
+      </div>
+    ` : ''}
   `;
 }
 
@@ -1952,6 +2106,7 @@ function renderPodium(){
       const podiumAiClass = p.isAI ? 'avatar-ai' : '';
       return `
         <div class="podium-slot ${cls}">
+          ${rankIdx === 0 ? '<div class="podium-crown">👑</div>' : ''}
           <div class="podium-medal">${medals[rankIdx]}</div>
           <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? '🤖' : initials(p.name))}</div>
           <div class="podium-name">${escapeHtml(p.nickname || p.name)}${streakBadgeHtml(p.id)}</div>
@@ -2156,6 +2311,13 @@ if(initFirebase()){
 }
 
 setInterval(renderCountdowns, 1000);
+
+document.querySelectorAll('.quick-nav-tile').forEach(tile => {
+  tile.addEventListener('click', () => {
+    const target = document.getElementById(tile.dataset.target);
+    if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
 </script>
 
 </body>
