@@ -1518,12 +1518,14 @@ function renderPredictions(){
 
 function renderPodium(){
   const wrap = $('podiumWrap');
-  if(players.length === 0){
-    wrap.style.display = 'none';
+  const scoredPlayers = players.filter(p => scoreFor(p.id) > 0);
+  if(scoredPlayers.length === 0){
+    wrap.innerHTML = `<div class="podium-title">Leaderboard</div><div class="beat-ai-empty">No points on the board yet \u2014 the podium fills in once someone gets a pick right.</div>`;
+    wrap.style.display = 'block';
     return;
   }
   wrap.style.display = 'block';
-  const ranked = [...players].sort((a,b) => scoreFor(b.id) - scoreFor(a.id)).slice(0,3);
+  const ranked = [...scoredPlayers].sort((a,b) => scoreFor(b.id) - scoreFor(a.id)).slice(0,3);
   const medals = ['🥇','🥈','🥉'];
   const order = ranked.length === 3 ? [1,0,2] : ranked.map((_,i)=>i);
   const slotClass = ['p2','p1','p3'];
