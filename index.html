@@ -323,6 +323,17 @@
     line-height:1.4;
     min-height:34px;
   }
+  .added-by-tag{
+    font-size:10px;
+    color: var(--grey);
+    font-style:italic;
+    margin-top:4px;
+  }
+  .added-by-tag.ai-tag{
+    color: #4fd1ff;
+    font-style:normal;
+    font-weight:600;
+  }
 
   /* Add prediction form */
   .add-form{
@@ -746,6 +757,10 @@
           <input type="number" id="formPoints" value="1" min="0" step="1">
         </div>
         <div class="field">
+          <label>Added by <span style="text-transform:none; letter-spacing:0;">(optional)</span></label>
+          <select id="formAddedBy"><option value="">—</option></select>
+        </div>
+        <div class="field">
           <button class="btn btn-primary" id="addPredBtn" style="width:100%;">Add</button>
         </div>
       </div>
@@ -761,6 +776,10 @@
         <div class="field" style="flex:1;">
           <label>Matchup or question</label>
           <input type="text" id="aiTopic" placeholder="e.g. Who wins Cowboys vs Eagles?">
+        </div>
+        <div class="field">
+          <label>Added by <span style="color:var(--red);">*</span></label>
+          <select id="aiAddedBy"><option value="">Who's asking?</option></select>
         </div>
         <div class="field">
           <button class="btn btn-primary" id="askAiBtn" style="width:100%;">Ask AI</button>
@@ -1046,10 +1065,22 @@ function renderYardRuler(){
 function renderPlayerOptions(){
   const formSel = $('formPlayer');
   const filterSel = $('filterPlayer');
-  formSel.innerHTML = players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
-  filterSel.innerHTML = '<option value="all">All players</option>' +
-    players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  const formAddedBySel = $('formAddedBy');
+  const aiAddedBySel = $('aiAddedBy');
+
+  const playerOptionsHtml = players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+  formSel.innerHTML = playerOptionsHtml;
+  filterSel.innerHTML = '<option value="all">All players</option>' + playerOptionsHtml;
   filterSel.value = activePlayerFilter;
+
+  const prevFormAddedBy = formAddedBySel.value;
+  formAddedBySel.innerHTML = '<option value="">—</option>' + playerOptionsHtml;
+  formAddedBySel.value = prevFormAddedBy;
+
+  const prevAiAddedBy = aiAddedBySel.value;
+  aiAddedBySel.innerHTML = '<option value="">Who\'s asking?</option>' + playerOptionsHtml;
+  aiAddedBySel.value = prevAiAddedBy;
 }
 
 function renderWeekOptions(){
@@ -1169,6 +1200,8 @@ function renderPredictions(){
     const player = players.find(p => p.id === row.playerId);
     const avatarStyle = player && player.photo ? `style="background-image:url('${player.photo}')"` : '';
     const cellAiClass = player && player.isAI ? 'avatar-ai' : '';
+    const addedByPlayer = row.addedBy ? players.find(p => p.id === row.addedBy) : null;
+    const isAutoAiPick = !addedByPlayer && player && player.isAI;
     return `
       <tr data-pred-id="${row.id}">
         <td data-label="Week"><span class="week-chip">${row.week}</span></td>
@@ -1180,6 +1213,8 @@ function renderPredictions(){
         </td>
         <td data-label="Prediction">
           <textarea class="pred-text-input" rows="1">${escapeHtml(row.text)}</textarea>
+          ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.nickname || addedByPlayer.name)}</div>` : ''}
+          ${isAutoAiPick ? `<div class="added-by-tag ai-tag">🤖 AI predicted</div>` : ''}
         </td>
         <td data-label="Result">
           <select class="result-select ${row.result}">
@@ -1379,9 +1414,10 @@ $('addPredBtn').addEventListener('click', async () => {
   const text = $('formText').value.trim();
   const result = $('formResult').value;
   const points = Number($('formPoints').value) || 0;
+  const addedBy = $('formAddedBy').value;
   if(!playerId){ await confirmModal('Add a player first', 'You need at least one player before logging a prediction.', 'OK'); return; }
   if(!text){ await confirmModal('Missing prediction', 'Enter what the prediction is before adding it.', 'OK'); return; }
-  predictions.push({ id: uid(), playerId, week, text, result, points });
+  predictions.push({ id: uid(), playerId, week, text, result, points, addedBy });
   $('formText').value = '';
   await savePredictions();
   renderPlayers(); renderPredictions(); renderTicker();
@@ -1392,11 +1428,13 @@ $('askAiBtn').addEventListener('click', async () => {
   const hint = $('aiHint');
   const week = $('aiWeek').value;
   const topic = $('aiTopic').value.trim();
+  const addedBy = $('aiAddedBy').value;
 
   if(AI_WORKER_URL.indexOf('PASTE_') === 0 || AI_APP_SECRET.indexOf('PASTE_') === 0){
     await confirmModal('Setup needed', 'The AI Analyst isn\'t fully connected yet \u2014 the Worker URL and/or shared secret still need to be pasted into the code.', 'OK');
     return;
   }
+  if(!addedBy){ await confirmModal('Who\'s asking?', 'Pick your name from "Added by" before asking the AI \u2014 it\'s required so the group knows who requested each AI pick.', 'OK'); return; }
   if(!topic){ await confirmModal('Missing question', 'Type a matchup or question for the AI to predict.', 'OK'); return; }
 
   btn.disabled = true;
@@ -1415,7 +1453,7 @@ $('askAiBtn').addEventListener('click', async () => {
     }
     await ensureAIPlayer();
     predictions.push({
-      id: uid(), playerId: AI_PLAYER_ID, week, text: data.prediction, result: 'pending', points: 1
+      id: uid(), playerId: AI_PLAYER_ID, week, text: data.prediction, result: 'pending', points: 1, addedBy
     });
     await savePredictions();
     renderPlayers(); renderPredictions(); renderTicker();
