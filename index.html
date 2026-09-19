@@ -536,6 +536,38 @@
   .dot-pending{ background: var(--grey); }
   .stats-accuracy{ font-size:11px; color: #4fd1ff; font-weight:600; }
   .stats-weekly-streak{ font-size:11px; color: var(--gold); font-weight:600; margin-top:4px; }
+  .bonus-adjust-row{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--line);
+  }
+  .bonus-adjust-row label{
+    display:block;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--grey);
+    margin-bottom:5px;
+  }
+  .bonus-adjust-controls{ display:flex; gap:6px; }
+  .bonus-adjust-input{
+    width:70px;
+    font-size:12px;
+  }
+  .bonus-adjust-save{
+    background: var(--panel);
+    border:1px solid var(--line);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .bonus-adjust-save:hover{ border-color: var(--gold); color: var(--gold); }
   .stats-empty{ font-size:12px; color: var(--grey); }
 
   .add-player-btn{
@@ -1850,7 +1882,9 @@ async function saveNflPick6Picks(){
 }
 
 function scoreFor(playerId){
-  return getCollegeScore(playerId) + getNflPick6Score(playerId);
+  const player = players.find(p => p.id === playerId);
+  const bonus = (player && Number(player.bonusPoints)) || 0;
+  return getCollegeScore(playerId) + getNflPick6Score(playerId) + bonus;
 }
 
 function getStreak(playerId){
@@ -1896,9 +1930,18 @@ function getWeeklyStreak(playerId){
 }
 
 function renderPlayerStatsPanel(p){
+  const bonusHtml = `
+    <div class="bonus-adjust-row">
+      <label>Manual score adjustment</label>
+      <div class="bonus-adjust-controls">
+        <input type="number" class="bonus-adjust-input" step="0.5" value="${Number(p.bonusPoints) || 0}" data-player-id="${p.id}">
+        <button class="bonus-adjust-save" data-player-id="${p.id}">Save</button>
+      </div>
+    </div>
+  `;
   const s = getPlayerStats(p.id);
   if(s.total === 0){
-    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div></div>`;
+    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${bonusHtml}</div>`;
   }
   const correctPct = (s.correct / s.total) * 100;
   const incorrectPct = (s.incorrect / s.total) * 100;
@@ -1918,6 +1961,7 @@ function renderPlayerStatsPanel(p){
       </div>
       <div class="stats-accuracy">${s.accuracy}% accuracy on graded picks</div>
       <div class="stats-weekly-streak">${weeklyStreak > 0 ? `🔥 ${weeklyStreak}-week hit streak` : 'No active weekly streak'}</div>
+      ${bonusHtml}
     </div>
   `;
 }
@@ -2454,6 +2498,19 @@ function renderPlayers(){
       e.stopPropagation();
       const id = btn.dataset.statsFor;
       expandedPlayerId = expandedPlayerId === id ? null : id;
+      renderPlayers();
+    });
+  });
+
+  list.querySelectorAll('.bonus-adjust-save').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.playerId;
+      const input = list.querySelector(`.bonus-adjust-input[data-player-id="${id}"]`);
+      const player = players.find(x => x.id === id);
+      if(!player || !input) return;
+      player.bonusPoints = Number(input.value) || 0;
+      await savePlayers();
       renderPlayers();
     });
   });
