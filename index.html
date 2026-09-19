@@ -149,14 +149,14 @@
   /* ---------- Quick-nav tile row ---------- */
   .quick-nav-row{
     display:grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap:10px;
     padding:14px 20px;
     background: var(--ink);
     border-bottom:1px solid var(--line);
   }
   @media (max-width: 760px){
-    .quick-nav-row{ grid-template-columns: repeat(2, 1fr); padding:12px; }
+    .quick-nav-row{ grid-template-columns: repeat(1, 1fr); padding:12px; }
   }
   .quick-nav-tile{
     display:flex;
@@ -1360,11 +1360,6 @@
     <span class="qnt-text"><span class="qnt-title">My Picks</span><span class="qnt-sub">Make your predictions</span></span>
     <span class="qnt-arrow">→</span>
   </button>
-  <button class="quick-nav-tile qnt-blue" data-target="podiumWrap">
-    <span class="qnt-icon-wrap qnt-icon-blue"><img id="qntTrophyIcon" width="34" height="34" alt=""></span>
-    <span class="qnt-text"><span class="qnt-title">Leaderboard</span><span class="qnt-sub">See where you stand</span></span>
-    <span class="qnt-arrow">→</span>
-  </button>
   <button class="quick-nav-tile qnt-purple" data-target="beatAiWrap">
     <span class="qnt-icon-wrap qnt-icon-purple"><img id="qntAiIcon" width="34" height="34" alt=""></span>
     <span class="qnt-text"><span class="qnt-title">Beat the AI</span><span class="qnt-sub">Can you top the algorithm?</span></span>
@@ -1391,8 +1386,6 @@
 
   <main class="main">
     <div id="trophyBanner" style="display:none;"></div>
-
-    <div class="podium-wrap" id="podiumWrap"></div>
 
     <div class="beat-ai-wrap" id="beatAiWrap"></div>
 
@@ -2631,7 +2624,6 @@ function render(){
   renderTicker();
   renderCountdowns();
   renderTrophyBanner();
-  renderPodium();
   renderBeatAiBoard();
   renderCollegePick6();
   applyLockState();
@@ -2749,7 +2741,6 @@ $('countdownStrip').addEventListener('click', (e) => {
 $('proBadgeImg').src = FOOTBALL_ICON2;
 $('collegeBadgeImg').src = ICON_COLLEGE_BADGE;
 $('qntPickIcon').src = ICON_PICKEM_BADGE;
-$('qntTrophyIcon').src = ICON_TROPHY;
 $('qntAiIcon').src = BEAT_AI_BADGE2;
 $('qntCollegeIcon').src = ICON_COLLEGE_BADGE;
 $('loungeLogoImg').src = LOUNGE_LOGO;
