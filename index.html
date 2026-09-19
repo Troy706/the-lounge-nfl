@@ -149,14 +149,14 @@
   /* ---------- Quick-nav tile row ---------- */
   .quick-nav-row{
     display:grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap:10px;
     padding:14px 20px;
     background: var(--ink);
     border-bottom:1px solid var(--line);
   }
   @media (max-width: 760px){
-    .quick-nav-row{ grid-template-columns: repeat(1, 1fr); padding:12px; }
+    .quick-nav-row{ grid-template-columns: repeat(2, 1fr); padding:12px; }
   }
   .quick-nav-tile{
     display:flex;
@@ -619,6 +619,16 @@
     letter-spacing:0.05em;
     color: var(--grey);
     margin-bottom:12px;
+  }
+  .add-form-note{
+    display:block;
+    font-family: var(--font-body);
+    font-weight:400;
+    text-transform:none;
+    letter-spacing:normal;
+    font-size:11px;
+    color: var(--grey);
+    margin-top:3px;
   }
   .form-grid{
     display:grid;
@@ -1175,6 +1185,19 @@
     justify-content:space-between;
     gap:8px;
   }
+  .ai-pick-row{
+    margin-top:4px;
+    padding-top:8px;
+    border-top:1px dashed rgba(79,209,255,0.3);
+  }
+  .ai-pick-value{
+    font-size:10px;
+    font-weight:600;
+    color: #4fd1ff;
+    background: rgba(79,209,255,0.12);
+    padding:4px 7px;
+    border-radius:3px;
+  }
   .college-pick-name{ font-size:12px; flex-shrink:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:90px; }
   .college-pick-btns{ display:flex; gap:4px; }
   .college-pick-btn{
@@ -1192,6 +1215,55 @@
   }
   .college-pick-btn:hover{ border-color: var(--green); }
   .college-pick-btn.selected{ background: rgba(31,191,117,0.18); border-color: var(--green); color: var(--white); font-weight:600; }
+
+  /* ---------- NFL Pick 6 (mirrors College Pick 6, red theme) ---------- */
+  .nfl-wrap{ border-color: rgba(228,0,43,0.35); }
+  .nfl-wrap .beat-ai-title{ color: var(--red); }
+  .nfl6-header{ justify-content:flex-end; }
+  .nfl6-winner-select{
+    font-size:10px;
+    padding:4px 6px;
+    max-width:150px;
+  }
+  .nfl6-pick-btn{
+    background: var(--panel);
+    border:1px solid var(--line);
+    color: var(--grey);
+    font-size:10px;
+    padding:4px 7px;
+    border-radius:3px;
+    cursor:pointer;
+    max-width:80px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .nfl6-pick-btn:hover{ border-color: var(--red); }
+  .nfl6-pick-btn.selected{ background: rgba(228,0,43,0.18); border-color: var(--red); color: var(--white); font-weight:600; }
+
+  /* ---------- Prediction Record board ---------- */
+  .prediction-record-wrap{ border-color: rgba(255,184,28,0.35); }
+  .prediction-record-wrap .beat-ai-title{ color: var(--gold); }
+  .prediction-record-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .prediction-record-row:last-child{ border-bottom:none; }
+  .prediction-record-name{ flex:1; font-size:13px; font-weight:600; min-width:0; }
+  .prediction-record-stat{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    color: var(--gold);
+    flex-shrink:0;
+    text-align:right;
+    width:90px;
+  }
+  .prediction-record-pct{ font-size:10px; color: var(--grey); font-weight:400; }
 
   /* ---------- Reactions ---------- */
   .reactions{ display:flex; gap:4px; flex-wrap:wrap; }
@@ -1365,8 +1437,13 @@
     <span class="qnt-text"><span class="qnt-title">Beat the AI</span><span class="qnt-sub">Can you top the algorithm?</span></span>
     <span class="qnt-arrow">→</span>
   </button>
-  <button class="quick-nav-tile qnt-red" data-target="collegeWrap">
-    <span class="qnt-icon-wrap qnt-icon-red"><img id="qntCollegeIcon" width="34" height="34" alt=""></span>
+  <button class="quick-nav-tile qnt-red" data-target="nflPick6Wrap">
+    <span class="qnt-icon-wrap qnt-icon-red"><img id="qntNflPick6Icon" width="34" height="34" alt=""></span>
+    <span class="qnt-text"><span class="qnt-title">NFL Pick 6</span><span class="qnt-sub">6 picks. 1 perfect week.</span></span>
+    <span class="qnt-arrow">→</span>
+  </button>
+  <button class="quick-nav-tile qnt-blue" data-target="collegeWrap">
+    <span class="qnt-icon-wrap qnt-icon-blue"><img id="qntCollegeIcon" width="34" height="34" alt=""></span>
     <span class="qnt-text"><span class="qnt-title">College Pick 6</span><span class="qnt-sub">6 picks. 1 perfect week.</span></span>
     <span class="qnt-arrow">→</span>
   </button>
@@ -1393,8 +1470,12 @@
     <div class="beat-ai-wrap college-wrap" id="collegeWrap"></div>
 
     <img id="proBannerImg" class="section-banner" alt="Pro Football">
+    <div class="beat-ai-wrap nfl-wrap" id="nflPick6Wrap"></div>
+
+    <div class="beat-ai-wrap prediction-record-wrap" id="predictionRecordWrap"></div>
+
     <div class="add-form" id="addFormSection">
-      <div class="add-form-title">Add a prediction</div>
+      <div class="add-form-title">Add a prediction <span class="add-form-note">General predictions \u2014 doesn't count toward your season score, but does affect your Prediction Record below</span></div>
       <div class="form-grid">
         <div class="field">
           <label>Player</label>
@@ -1417,18 +1498,8 @@
           </select>
         </div>
         <div class="field">
-          <label>Points</label>
-          <input type="number" id="formPoints" value="1" min="0" step="1">
-        </div>
-        <div class="field">
           <label>Added by <span style="text-transform:none; letter-spacing:0;">(optional)</span></label>
           <select id="formAddedBy"><option value="">—</option></select>
-        </div>
-        <div class="field field-checkbox">
-          <label class="checkbox-label">
-            <input type="checkbox" id="formGeneral">
-            General prediction <span style="text-transform:none; letter-spacing:0;">(no points)</span>
-          </label>
         </div>
         <div class="field">
           <button class="btn btn-primary" id="addPredBtn" style="width:100%;">Add</button>
@@ -1482,7 +1553,6 @@
             <th>Player</th>
             <th>Prediction</th>
             <th>Result</th>
-            <th>Pts</th>
             <th>React</th>
             <th></th>
           </tr>
@@ -1520,6 +1590,8 @@ let predictions = [];
 let season = { finished: false, winnerIds: [], finishedAt: null };
 let collegeSlates = [];
 let collegePicks = [];
+let nflPick6Slates = [];
+let nflPick6Picks = [];
 let marqueeGames = { nfl: null, college: null };
 let nflSlate = null;
 let activePlayerFilter = 'all';
@@ -1706,6 +1778,14 @@ function attachListeners(){
     (snap) => { collegePicks = objToArray(snap.val()); render(); },
     (err) => showBanner('College picks sync error: ' + err.message, 'error')
   );
+  db.ref('nflPick6Slates').on('value',
+    (snap) => { nflPick6Slates = objToArray(snap.val()); render(); },
+    (err) => showBanner('NFL Pick 6 slate sync error: ' + err.message, 'error')
+  );
+  db.ref('nflPick6Picks').on('value',
+    (snap) => { nflPick6Picks = objToArray(snap.val()); render(); },
+    (err) => showBanner('NFL Pick 6 picks sync error: ' + err.message, 'error')
+  );
   db.ref('marqueeGames').on('value',
     (snap) => { marqueeGames = snap.val() || { nfl: null, college: null }; renderCountdowns(); },
     (err) => showBanner('Marquee games sync error: ' + err.message, 'error')
@@ -1758,11 +1838,19 @@ async function saveCollegePicks(){
   try{ await db.ref('collegePicks').set(arrayToObj(collegePicks)); }
   catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
 }
+async function saveNflPick6Slate(weekKey, slateObj){
+  if(!firebaseReady) return;
+  try{ await db.ref('nflPick6Slates/' + weekKey).set(slateObj); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+async function saveNflPick6Picks(){
+  if(!firebaseReady) return;
+  try{ await db.ref('nflPick6Picks').set(arrayToObj(nflPick6Picks)); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
 
 function scoreFor(playerId){
-  return predictions
-    .filter(p => p.playerId === playerId && p.result === 'correct' && !p.general)
-    .reduce((sum, p) => sum + (Number(p.points) || 0), 0);
+  return getCollegeScore(playerId) + getNflPick6Score(playerId);
 }
 
 function getStreak(playerId){
@@ -1885,6 +1973,75 @@ function getCurrentCollegeSlate(){
   return [...collegeSlates].sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0))[0];
 }
 
+function getNflPick6Score(playerId){
+  let score = 0;
+  nflPick6Slates.forEach(slate => {
+    const games = slate.games || [];
+    const gradedGames = games.filter(g => g.winner && g.winner !== 'pending');
+    let weekCorrect = 0;
+    gradedGames.forEach(game => {
+      const pick = nflPick6Picks.find(p => p.gameId === game.id && p.playerId === playerId);
+      if(pick && pick.pickedTeam === game.winner){ score++; weekCorrect++; }
+    });
+    if(games.length === 6 && gradedGames.length === 6 && weekCorrect === 6){
+      score += 2; // perfect week bonus
+    }
+  });
+  return score;
+}
+
+function getNflPick6PerfectWeeks(playerId){
+  let count = 0;
+  nflPick6Slates.forEach(slate => {
+    const games = slate.games || [];
+    if(games.length !== 6) return;
+    const allGraded = games.every(g => g.winner && g.winner !== 'pending');
+    if(!allGraded) return;
+    const allCorrect = games.every(game => {
+      const pick = nflPick6Picks.find(p => p.gameId === game.id && p.playerId === playerId);
+      return pick && pick.pickedTeam === game.winner;
+    });
+    if(allCorrect) count++;
+  });
+  return count;
+}
+
+function getCurrentNflPick6Slate(){
+  if(nflPick6Slates.length === 0) return null;
+  return [...nflPick6Slates].sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0))[0];
+}
+
+async function setNflPick6Winner(weekKey, gameId, winner){
+  const slate = nflPick6Slates.find(s => s.weekKey === weekKey);
+  if(!slate) return;
+  const game = slate.games.find(g => g.id === gameId);
+  if(!game) return;
+  game.winner = winner;
+  await saveNflPick6Slate(weekKey, slate);
+}
+
+async function setNflPick6Pick(weekKey, gameId, playerId, pickedTeam){
+  let pick = nflPick6Picks.find(p => p.gameId === gameId && p.playerId === playerId);
+  if(pick){
+    if(pick.pickedTeam === pickedTeam){ return; }
+    pick.pickedTeam = pickedTeam;
+  } else {
+    pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
+    nflPick6Picks.push(pick);
+  }
+  await saveNflPick6Picks();
+  renderNflPick6();
+}
+
+function getPredictionRecord(playerId){
+  const own = predictions.filter(p => p.playerId === playerId && p.result !== 'pending');
+  const wins = own.filter(p => p.result === 'correct').length;
+  const losses = own.filter(p => p.result === 'incorrect').length;
+  const total = wins + losses;
+  const winPct = total > 0 ? wins / total : 0;
+  return { wins, losses, winPct };
+}
+
 async function setCollegeWinner(weekKey, gameId, winner){
   const slate = collegeSlates.find(s => s.weekKey === weekKey);
   if(!slate) return;
@@ -1905,6 +2062,19 @@ async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
   }
   await saveCollegePicks();
   renderCollegePick6();
+}
+
+function aiPickRowHtml(gameId, winner, winnerSet){
+  const aiPick = collegePicks.concat(nflPick6Picks).find(pk => pk.gameId === gameId && pk.playerId === AI_PLAYER_ID);
+  if(!aiPick) return '';
+  const correct = winnerSet && aiPick.pickedTeam === winner;
+  const wrong = winnerSet && aiPick.pickedTeam !== winner;
+  return `
+    <div class="college-pick-row ai-pick-row">
+      <span class="college-pick-name"><img src="${ICON_AI_AVATAR}" width="14" height="14" style="vertical-align:-3px; border-radius:3px;"> The Algorithm${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
+      <span class="ai-pick-value">${escapeHtml(aiPick.pickedTeam)}</span>
+    </div>
+  `;
 }
 
 function renderCollegePick6(){
@@ -1930,7 +2100,7 @@ function renderCollegePick6(){
 
   if(!slate){
     wrap.innerHTML = `
-      <div class="beat-ai-title"><img src="${ICON_COLLEGE_BADGE}" width="20" height="20" style="vertical-align:-5px; border-radius:3px;"> College Pick 6<span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
+      <div class="beat-ai-title"><img src="${ICON_COLLEGE_BADGE}" width="20" height="20" style="vertical-align:-5px; border-radius:3px;"> College Pick 6<span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 counts toward your season score</span></div>
       <div class="empty-state-block"><img src="${TROPHY_EMPTY}" width="60" class="empty-state-icon"><div class="beat-ai-empty">This week's slate hasn't been generated yet \u2014 check back after the next scheduled run.</div></div>
     `;
     return;
@@ -1965,13 +2135,14 @@ function renderCollegePick6(){
               </div>
             `;
           }).join('')}
+          ${aiPickRowHtml(game.id, game.winner, winnerSet)}
         </div>
       </div>
     `;
   }).join('');
 
   wrap.innerHTML = `
-    <div class="beat-ai-title"><img src="${ICON_COLLEGE_BADGE}" width="20" height="20" style="vertical-align:-5px; border-radius:3px;"> College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 own separate score</span></div>
+    <div class="beat-ai-title"><img src="${ICON_COLLEGE_BADGE}" width="20" height="20" style="vertical-align:-5px; border-radius:3px;"> College Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 counts toward your season score</span></div>
     ${leaderboardHtml}
     <div class="college-games-grid">${gamesHtml}</div>
   `;
@@ -1985,6 +2156,89 @@ function renderCollegePick6(){
   wrap.querySelectorAll('.college-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       setCollegePick(slate.weekKey, btn.dataset.gameId, btn.dataset.playerId, btn.dataset.team);
+    });
+  });
+}
+
+function renderNflPick6(){
+  const wrap = $('nflPick6Wrap');
+  if(!wrap) return;
+  const humanPlayers = players.filter(p => !p.isAI);
+  const slate = getCurrentNflPick6Slate();
+
+  const leaderboardHtml = humanPlayers.length === 0 ? '' : `
+    <div class="college-leaderboard">
+      ${humanPlayers
+        .map(p => ({ player: p, score: getNflPick6Score(p.id) }))
+        .sort((a, b) => b.score - a.score)
+        .map((r, i) => `
+          <div class="beat-ai-row">
+            <div class="beat-ai-rank">#${i+1}</div>
+            <div class="beat-ai-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+            <div class="beat-ai-pts">${r.score} pt${r.score === 1 ? '' : 's'}</div>
+          </div>
+        `).join('')}
+    </div>
+  `;
+
+  if(!slate){
+    wrap.innerHTML = `
+      <div class="beat-ai-title"><img src="${FOOTBALL_ICON2}" width="20" height="20" style="vertical-align:-5px; border-radius:50%;"> NFL Pick 6<span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 counts toward your season score</span></div>
+      <div class="empty-state-block"><img src="${TROPHY_EMPTY}" width="60" class="empty-state-icon"><div class="beat-ai-empty">This week's slate hasn't been generated yet \u2014 check back after the next scheduled run.</div></div>
+    `;
+    return;
+  }
+
+  const gamesHtml = slate.games.map(game => {
+    const winnerSet = game.winner && game.winner !== 'pending';
+    return `
+      <div class="college-game-card">
+        <div class="college-game-header nfl6-header">
+          <span class="college-winner-select-spacer"></span>
+          <select class="nfl6-winner-select" data-game-id="${game.id}">
+            <option value="pending" ${!winnerSet ? 'selected' : ''}>Winner: Pending</option>
+            <option value="${escapeAttr(game.teamA)}" ${game.winner === game.teamA ? 'selected' : ''}>${escapeHtml(game.teamA)} won</option>
+            <option value="${escapeAttr(game.teamB)}" ${game.winner === game.teamB ? 'selected' : ''}>${escapeHtml(game.teamB)} won</option>
+          </select>
+        </div>
+        <div class="college-matchup">${escapeHtml(game.teamA)} <span class="college-vs">vs</span> ${escapeHtml(game.teamB)}</div>
+        <div class="college-picks-list">
+          ${humanPlayers.length === 0 ? '<div class="stats-empty">Add players to start picking.</div>' : humanPlayers.map(p => {
+            const pick = nflPick6Picks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
+            const picked = pick ? pick.pickedTeam : null;
+            const correct = winnerSet && picked && picked === game.winner;
+            const wrong = winnerSet && picked && picked !== game.winner;
+            return `
+              <div class="college-pick-row">
+                <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
+                <div class="college-pick-btns">
+                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}">${escapeHtml(game.teamA)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}">${escapeHtml(game.teamB)}</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+          ${aiPickRowHtml(game.id, game.winner, winnerSet)}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="beat-ai-title"><img src="${FOOTBALL_ICON2}" width="20" height="20" style="vertical-align:-5px; border-radius:50%;"> NFL Pick 6 <span class="college-week-badge">${escapeHtml(slate.week)}</span><span class="beat-ai-sub">1 pt per correct pick, +2 for a perfect 6/6 week \u2014 counts toward your season score</span></div>
+    ${leaderboardHtml}
+    <div class="college-games-grid">${gamesHtml}</div>
+  `;
+
+  wrap.querySelectorAll('.nfl6-winner-select').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      await setNflPick6Winner(slate.weekKey, sel.dataset.gameId, e.target.value);
+      renderNflPick6();
+    });
+  });
+  wrap.querySelectorAll('.nfl6-pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setNflPick6Pick(slate.weekKey, btn.dataset.gameId, btn.dataset.playerId, btn.dataset.team);
     });
   });
 }
@@ -2017,6 +2271,36 @@ function renderBeatAiBoard(){
         <div class="beat-ai-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
         <div class="beat-ai-weeks">${r.stats.weeksBeaten} week${r.stats.weeksBeaten === 1 ? '' : 's'} beaten</div>
         <div class="beat-ai-pts">+${r.stats.bonus.toFixed(1)}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function renderPredictionRecordBoard(){
+  const wrap = $('predictionRecordWrap');
+  if(!wrap) return;
+  const humanPlayers = players.filter(p => !p.isAI);
+  const anyGraded = predictions.some(p => p.result !== 'pending');
+
+  if(humanPlayers.length === 0 || !anyGraded){
+    wrap.innerHTML = `
+      <div class="beat-ai-title"><img src="${ICON_TROPHY}" width="18" height="18" style="vertical-align:-4px;"> Prediction Record<span class="beat-ai-sub">Win/loss accuracy from All Predictions \u2014 for bragging rights, doesn't affect your season score</span></div>
+      <div class="empty-state-block"><img src="${TROPHY_EMPTY}" width="60" class="empty-state-icon"><div class="beat-ai-empty">Once some predictions are graded, everyone's record shows up here.</div></div>
+    `;
+    return;
+  }
+
+  const ranked = humanPlayers
+    .map(p => ({ player: p, record: getPredictionRecord(p.id) }))
+    .sort((a, b) => b.record.winPct - a.record.winPct || b.record.wins - a.record.wins);
+
+  wrap.innerHTML = `
+    <div class="beat-ai-title"><img src="${ICON_TROPHY}" width="18" height="18" style="vertical-align:-4px;"> Prediction Record<span class="beat-ai-sub">Win/loss accuracy from All Predictions \u2014 for bragging rights, doesn't affect your season score</span></div>
+    ${ranked.map((r, i) => `
+      <div class="prediction-record-row">
+        <div class="beat-ai-rank">#${i+1}</div>
+        <div class="prediction-record-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+        <div class="prediction-record-stat">${r.record.wins}-${r.record.losses} <span class="prediction-record-pct">${Math.round(r.record.winPct*100)}%</span></div>
       </div>
     `).join('')}
   `;
@@ -2257,7 +2541,6 @@ function renderPredictions(){
           <textarea class="pred-text-input" rows="1">${escapeHtml(row.text)}</textarea>
           ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.nickname || addedByPlayer.name)}</div>` : ''}
           ${isAutoAiPick ? `<div class="added-by-tag ai-tag"><img src="${ICON_AI_AVATAR}" width="16" height="16" style="vertical-align:-3px; border-radius:3px;"> AI predicted</div>` : ''}
-          ${row.general ? `<div class="general-tag">📋 General prediction (no points)</div>` : ''}
           <div class="comments-list">
             ${(row.comments || []).map(c => {
               const commenter = players.find(p => p.id === c.playerId);
@@ -2278,7 +2561,6 @@ function renderPredictions(){
             <option value="incorrect" ${row.result==='incorrect'?'selected':''}>Incorrect</option>
           </select>
         </td>
-        <td data-label="Pts"><input type="number" class="pts-input" value="${row.points}" min="0" step="1" data-general="${!!row.general}" ${row.general ? 'disabled' : ''}></td>
         <td data-label="React">
           <div class="reactions">
             <button class="reaction-btn" data-reaction="fire">🔥 <span class="reaction-count">${(row.reactions && row.reactions.fire) || 0}</span></button>
@@ -2331,11 +2613,6 @@ function renderPredictions(){
     resultSel.addEventListener('change', async (e) => {
       row.result = e.target.value;
       resultSel.className = 'result-select ' + row.result;
-      await savePredictions();
-      renderPlayers(); renderTicker();
-    });
-    tr.querySelector('.pts-input').addEventListener('change', async (e) => {
-      row.points = Number(e.target.value) || 0;
       await savePredictions();
       renderPlayers(); renderTicker();
     });
@@ -2626,6 +2903,8 @@ function render(){
   renderTrophyBanner();
   renderBeatAiBoard();
   renderCollegePick6();
+  renderNflPick6();
+  renderPredictionRecordBoard();
   applyLockState();
 }
 
@@ -2642,14 +2921,11 @@ $('addPredBtn').addEventListener('click', async () => {
   const week = $('formWeek').value;
   const text = $('formText').value.trim();
   const result = $('formResult').value;
-  const points = Number($('formPoints').value) || 0;
   const addedBy = $('formAddedBy').value;
-  const general = $('formGeneral').checked;
   if(!playerId){ await confirmModal('Add a player first', 'You need at least one player before logging a prediction.', 'OK'); return; }
   if(!text){ await confirmModal('Missing prediction', 'Enter what the prediction is before adding it.', 'OK'); return; }
-  predictions.push({ id: uid(), playerId, week, text, result, points: general ? 0 : points, addedBy, general });
+  predictions.push({ id: uid(), playerId, week, text, result, points: 0, general: true, addedBy });
   $('formText').value = '';
-  $('formGeneral').checked = false;
   await savePredictions();
   renderPlayers(); renderPredictions(); renderTicker();
 });
@@ -2684,7 +2960,7 @@ $('askAiBtn').addEventListener('click', async () => {
     }
     await ensureAIPlayer();
     predictions.push({
-      id: uid(), playerId: AI_PLAYER_ID, week, text: data.prediction, result: 'pending', points: 1, addedBy
+      id: uid(), playerId: AI_PLAYER_ID, week, text: data.prediction, result: 'pending', points: 0, general: true, addedBy
     });
     await savePredictions();
     renderPlayers(); renderPredictions(); renderTicker();
@@ -2742,6 +3018,7 @@ $('proBadgeImg').src = FOOTBALL_ICON2;
 $('collegeBadgeImg').src = ICON_COLLEGE_BADGE;
 $('qntPickIcon').src = ICON_PICKEM_BADGE;
 $('qntAiIcon').src = BEAT_AI_BADGE2;
+$('qntNflPick6Icon').src = FOOTBALL_ICON2;
 $('qntCollegeIcon').src = ICON_COLLEGE_BADGE;
 $('loungeLogoImg').src = LOUNGE_LOGO;
 $('proBannerImg').src = PRO_BANNER;
