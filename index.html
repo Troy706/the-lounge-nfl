@@ -115,6 +115,31 @@
     text-shadow: 0 0 12px rgba(255,184,28,0.35);
   }
   .countdown-item.countdown-college .countdown-time{ color: var(--green); text-shadow: 0 0 12px rgba(31,191,117,0.35); }
+  .live-line{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .live-badge{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:0.04em;
+    padding:2px 7px;
+    border-radius:3px;
+  }
+  .live-badge.live-final{ background: rgba(255,255,255,0.1); color: var(--white); }
+  .live-badge.live-in-progress{ background: rgba(228,0,43,0.2); color: var(--red); animation: live-pulse 1.6s ease-in-out infinite; }
+  @keyframes live-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
+  .live-score{ font-family: var(--font-display); font-weight:700; font-size:20px; color: var(--gold); }
+  .countdown-item.countdown-college .live-score{ color: var(--green); }
+  .live-detail{ font-size:11px; color: var(--grey); }
+  .pick6-live-line{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:10px;
+    margin-top:4px;
+    margin-bottom:8px;
+  }
+  .pick6-live-line .live-score{ font-size:12px; }
+  .pick6-live-line .live-badge{ font-size:9px; padding:1px 5px; }
   .countdown-cta{
     display:inline-block;
     margin-top:0;
@@ -2108,6 +2133,15 @@ async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
   renderCollegePick6();
 }
 
+function pick6LiveLineHtml(game){
+  if(!game.live || game.live.status === 'scheduled') return '';
+  const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
+  if(game.live.status === 'final'){
+    return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span><span class="live-score">${scoreText}</span></div>`;
+  }
+  return `<div class="pick6-live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span><span class="live-score">${scoreText}</span>${game.live.statusDetail ? `<span class="live-detail">${escapeHtml(game.live.statusDetail)}</span>` : ''}</div>`;
+}
+
 function aiPickRowHtml(gameId, winner, winnerSet){
   const aiPick = collegePicks.concat(nflPick6Picks).find(pk => pk.gameId === gameId && pk.playerId === AI_PLAYER_ID);
   if(!aiPick) return '';
@@ -2163,6 +2197,7 @@ function renderCollegePick6(){
           </select>
         </div>
         <div class="college-matchup">${escapeHtml(game.teamA)} <span class="college-vs">vs</span> ${escapeHtml(game.teamB)}</div>
+        ${pick6LiveLineHtml(game)}
         <div class="college-picks-list">
           ${humanPlayers.length === 0 ? '<div class="stats-empty">Add players to start picking.</div>' : humanPlayers.map(p => {
             const pick = collegePicks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
@@ -2246,6 +2281,7 @@ function renderNflPick6(){
           </select>
         </div>
         <div class="college-matchup">${escapeHtml(game.teamA)} <span class="college-vs">vs</span> ${escapeHtml(game.teamB)}</div>
+        ${pick6LiveLineHtml(game)}
         <div class="college-picks-list">
           ${humanPlayers.length === 0 ? '<div class="stats-empty">Add players to start picking.</div>' : humanPlayers.map(p => {
             const pick = nflPick6Picks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
@@ -2382,6 +2418,15 @@ function formatCountdown(targetISO){
   return `${minutes}m ${seconds}s`;
 }
 
+function liveStatusHtml(live){
+  if(!live || live.status === 'scheduled') return '';
+  const scoreText = `${live.scoreA}\u2013${live.scoreB}`;
+  if(live.status === 'final'){
+    return `<div class="live-line"><span class="live-badge live-final">FINAL</span> <span class="live-score">${scoreText}</span></div>`;
+  }
+  return `<div class="live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span> <span class="live-score">${scoreText}</span>${live.statusDetail ? ` <span class="live-detail">${escapeHtml(live.statusDetail)}</span>` : ''}</div>`;
+}
+
 function renderCountdowns(){
   const strip = $('countdownStrip');
   if(!strip) return;
@@ -2398,7 +2443,7 @@ function renderCountdowns(){
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
           <div class="countdown-label">${escapeHtml(nfl.matchup)}</div>
-          <div class="countdown-time">${formatCountdown(nfl.kickoffISO)}</div>
+          ${nfl.live && nfl.live.status !== 'scheduled' ? liveStatusHtml(nfl.live) : `<div class="countdown-time">${formatCountdown(nfl.kickoffISO)}</div>`}
           <div class="countdown-cta-row">
             <button class="countdown-cta countdown-cta-nfl" data-target="addFormSection">View all picks →</button>
             <button class="countdown-cta countdown-cta-nfl-outline" id="viewAllGamesBtn">View all games →</button>
@@ -2412,7 +2457,7 @@ function renderCountdowns(){
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
           <div class="countdown-label">${escapeHtml(college.matchup)}</div>
-          <div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>
+          ${college.live && college.live.status !== 'scheduled' ? liveStatusHtml(college.live) : `<div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>`}
           <button class="countdown-cta countdown-cta-college" data-target="collegeWrap">View College Pick 6 →</button>
         </div>
       </div>
