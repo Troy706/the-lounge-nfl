@@ -1177,6 +1177,52 @@
 
   /* ---------- College Pick 6 ---------- */
   .college-wrap{ border-color: rgba(31,191,117,0.35); }
+  .history-wrap{ padding-top:14px; padding-bottom:14px; }
+  .history-week{ border-bottom:1px solid var(--line); }
+  .history-week:last-child{ border-bottom:none; }
+  .history-week-toggle{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:none;
+    border:none;
+    color: var(--white);
+    padding:12px 4px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .history-week-toggle:hover{ background: rgba(255,255,255,0.03); }
+  .history-week-label{ font-family: var(--font-display); font-weight:600; font-size:13px; }
+  .history-week-status{ font-size:11px; color: var(--grey); flex:1; text-align:right; margin-right:8px; }
+  .history-week-arrow{ color: var(--grey); font-size:12px; transition: transform 0.15s ease; flex-shrink:0; }
+  .history-week-arrow.open{ transform: rotate(180deg); }
+  .history-week-body{ padding:0 4px 14px; }
+  .history-games-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap:10px;
+    margin-top:8px;
+  }
+  .history-game-card{
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px 12px;
+  }
+  .history-matchup{ font-family: var(--font-display); font-weight:600; font-size:13px; margin-bottom:4px; }
+  .history-result{ font-size:11px; color: var(--grey); margin-bottom:8px; }
+  .history-pick-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    font-size:11px;
+    padding:3px 0;
+  }
+  .history-pick-name{ flex-shrink:0; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .history-pick-value{ color: var(--grey); text-align:right; }
   .college-wrap .beat-ai-title{ color: var(--green); }
   .college-week-badge{
     display:inline-block;
@@ -1525,9 +1571,11 @@
 
     <img id="collegeBannerImg" class="section-banner" alt="College Football">
     <div class="beat-ai-wrap college-wrap" id="collegeWrap"></div>
+    <div class="beat-ai-wrap college-wrap history-wrap" id="collegeHistoryWrap"></div>
 
     <img id="proBannerImg" class="section-banner" alt="Pro Football">
     <div class="beat-ai-wrap nfl-wrap" id="nflPick6Wrap"></div>
+    <div class="beat-ai-wrap nfl-wrap history-wrap" id="nflHistoryWrap"></div>
 
     <div class="beat-ai-wrap prediction-record-wrap" id="predictionRecordWrap"></div>
 
@@ -1653,6 +1701,8 @@ let marqueeGames = { nfl: null, college: null };
 let nflSlate = null;
 let activePlayerFilter = 'all';
 let expandedPlayerId = null;
+let expandedCollegeHistoryWeek = null;
+let expandedNflHistoryWeek = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -2321,6 +2371,103 @@ function renderNflPick6(){
       setNflPick6Pick(slate.weekKey, btn.dataset.gameId, btn.dataset.playerId, btn.dataset.team);
     });
   });
+}
+
+function getPick6WeekTally(slate, picksArr, playerId){
+  let correct = 0, graded = 0;
+  (slate.games || []).forEach(game => {
+    if(!game.winner || game.winner === 'pending') return;
+    graded++;
+    const pick = picksArr.find(p => p.gameId === game.id && p.playerId === playerId);
+    if(pick && pick.pickedTeam === game.winner) correct++;
+  });
+  return { correct, graded };
+}
+
+function renderPick6History(containerId, slates, picksArr, currentWeekKey, expandedWeekGetter, expandedWeekSetter, pickBtnLabel, rerenderFn){
+  const wrap = $(containerId);
+  if(!wrap) return;
+  const humanPlayers = players.filter(p => !p.isAI);
+  const pastSlates = slates
+    .filter(s => s.weekKey !== currentWeekKey)
+    .sort((a, b) => (b.generatedAt || 0) - (a.generatedAt || 0));
+
+  if(pastSlates.length === 0){
+    wrap.innerHTML = `<div class="beat-ai-title">📜 Past Weeks<span class="beat-ai-sub">Once a new week's games replace this one, it moves here \u2014 nothing is ever lost.</span></div><div class="beat-ai-empty">No past weeks yet.</div>`;
+    return;
+  }
+
+  const weeksHtml = pastSlates.map(slate => {
+    const gradedCount = (slate.games || []).filter(g => g.winner && g.winner !== 'pending').length;
+    const totalCount = (slate.games || []).length;
+    const isOpen = expandedWeekGetter() === slate.weekKey;
+    const gamesHtml = (slate.games || []).map(game => {
+      const winnerSet = game.winner && game.winner !== 'pending';
+      const resultText = winnerSet ? `${escapeHtml(game.winner)} won${game.live ? ` \u00b7 ${game.live.scoreA}\u2013${game.live.scoreB}` : ''}` : 'Not yet decided';
+      const picksHtml = humanPlayers.map(p => {
+        const pick = collegePicks.concat(nflPick6Picks).find(pk => pk.gameId === game.id && pk.playerId === p.id);
+        if(!pick) return '';
+        const correct = winnerSet && pick.pickedTeam === game.winner;
+        const wrong = winnerSet && pick.pickedTeam !== game.winner;
+        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.nickname || p.name)}</span><span class="history-pick-value">${escapeHtml(pick.pickedTeam)}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
+      }).join('');
+      return `
+        <div class="history-game-card">
+          <div class="history-matchup">${escapeHtml(game.teamA)} <span class="college-vs">vs</span> ${escapeHtml(game.teamB)}</div>
+          <div class="history-result">${resultText}</div>
+          ${picksHtml}
+          ${aiPickRowHtml(game.id, game.winner, winnerSet)}
+        </div>
+      `;
+    }).join('');
+
+    const tallyHtml = humanPlayers.map(p => {
+      const t = getPick6WeekTally(slate, collegePicks.concat(nflPick6Picks), p.id);
+      return `${escapeHtml(p.nickname || p.name)} ${t.correct}/${t.graded || totalCount}`;
+    }).join(' \u2022 ');
+
+    return `
+      <div class="history-week">
+        <button class="history-week-toggle" data-week-key="${slate.weekKey}">
+          <span class="history-week-label">${escapeHtml(slate.week)}</span>
+          <span class="history-week-status">${gradedCount}/${totalCount} graded${tallyHtml ? ' \u2014 ' + tallyHtml : ''}</span>
+          <span class="history-week-arrow ${isOpen ? 'open' : ''}">\u25BC</span>
+        </button>
+        ${isOpen ? `<div class="history-week-body"><div class="history-games-grid">${gamesHtml}</div></div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="beat-ai-title">📜 Past Weeks<span class="beat-ai-sub">Once a new week's games replace this one, it moves here \u2014 nothing is ever lost.</span></div>
+    ${weeksHtml}
+  `;
+
+  wrap.querySelectorAll('.history-week-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.weekKey;
+      expandedWeekSetter(expandedWeekGetter() === key ? null : key);
+      rerenderFn();
+    });
+  });
+}
+
+function renderCollegeHistory(){
+  const current = getCurrentCollegeSlate();
+  renderPick6History(
+    'collegeHistoryWrap', collegeSlates, collegePicks, current ? current.weekKey : null,
+    () => expandedCollegeHistoryWeek, (v) => { expandedCollegeHistoryWeek = v; },
+    'College', renderCollegeHistory
+  );
+}
+
+function renderNflHistory(){
+  const current = getCurrentNflPick6Slate();
+  renderPick6History(
+    'nflHistoryWrap', nflPick6Slates, nflPick6Picks, current ? current.weekKey : null,
+    () => expandedNflHistoryWeek, (v) => { expandedNflHistoryWeek = v; },
+    'NFL', renderNflHistory
+  );
 }
 
 
@@ -3006,6 +3153,8 @@ function render(){
   renderBeatAiBoard();
   renderCollegePick6();
   renderNflPick6();
+  renderCollegeHistory();
+  renderNflHistory();
   renderPredictionRecordBoard();
   applyLockState();
 }
