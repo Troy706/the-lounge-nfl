@@ -1318,6 +1318,10 @@
   }
   .college-pick-btn:hover{ border-color: var(--green); }
   .college-pick-btn.selected{ background: rgba(31,191,117,0.18); border-color: var(--green); color: var(--white); font-weight:600; }
+  .college-pick-btn:disabled{ cursor:default; opacity:0.65; }
+  .college-pick-btn:disabled:hover{ border-color: var(--line); }
+  .college-pick-btn.selected:disabled{ opacity:0.85; }
+  .college-pick-btn.selected:disabled:hover{ border-color: var(--green); }
 
   /* ---------- NFL Pick 6 (mirrors College Pick 6, red theme) ---------- */
   .nfl-wrap{ border-color: rgba(228,0,43,0.35); }
@@ -1343,6 +1347,10 @@
   }
   .nfl6-pick-btn:hover{ border-color: var(--red); }
   .nfl6-pick-btn.selected{ background: rgba(228,0,43,0.18); border-color: var(--red); color: var(--white); font-weight:600; }
+  .nfl6-pick-btn:disabled{ cursor:default; opacity:0.65; }
+  .nfl6-pick-btn:disabled:hover{ border-color: var(--line); }
+  .nfl6-pick-btn.selected:disabled{ opacity:0.85; }
+  .nfl6-pick-btn.selected:disabled:hover{ border-color: var(--red); }
 
   /* ---------- Prediction Record board ---------- */
   .prediction-record-wrap{ border-color: rgba(255,184,28,0.35); }
@@ -2258,8 +2266,8 @@ function renderCollegePick6(){
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
-                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}">${escapeHtml(game.teamA)}</button>
-                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}">${escapeHtml(game.teamB)}</button>
+                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
@@ -2342,8 +2350,8 @@ function renderNflPick6(){
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
-                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}">${escapeHtml(game.teamA)}</button>
-                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}">${escapeHtml(game.teamB)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
