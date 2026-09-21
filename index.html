@@ -337,10 +337,9 @@
   .lounge-logo-img{ height:82px; width:auto; display:block; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6)); }
   .section-banner{
     display:block;
-    width:auto;
-    height:180px;
+    width:100%;
+    height:auto;
     max-width:100%;
-    object-fit:contain;
     margin:0 auto 14px;
     border-radius:8px;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
@@ -371,6 +370,7 @@
   .btn-primary{ background: var(--red); color:#fff; }
   .btn-primary:hover{ background: var(--red-dark); }
   .btn-ghost{ background: var(--panel-raised); color: var(--white); border:1px solid var(--line); }
+  .btn-ghost.admin-unlocked{ border-color: var(--gold); color: var(--gold); }
   .btn-ghost:hover{ background:#22262f; }
   .btn-small{ padding:6px 10px; font-size:11px; }
 
@@ -593,6 +593,8 @@
     cursor:pointer;
   }
   .bonus-adjust-save:hover{ border-color: var(--gold); color: var(--gold); }
+  .bonus-adjust-locked{ text-transform:none; letter-spacing:normal; font-size:10px; }
+  .bonus-adjust-readonly{ font-family: var(--font-display); font-weight:600; font-size:13px; color: var(--white); }
   .stats-empty{ font-size:12px; color: var(--grey); }
 
   .add-player-btn{
@@ -610,6 +612,44 @@
     margin-top:4px;
   }
   .add-player-btn:hover{ border-color: var(--red); color: var(--white); }
+  .pending-players-title{
+    font-family: var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:10px;
+    letter-spacing:0.05em;
+    color: var(--grey);
+    margin-top:12px;
+    margin-bottom:6px;
+  }
+  .pending-player-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:6px 8px;
+    background: var(--panel-raised);
+    border:1px solid var(--line);
+    border-radius:4px;
+    margin-bottom:5px;
+    font-size:12px;
+  }
+  .pending-player-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pending-player-nick{ color: var(--grey); font-style:italic; }
+  .pending-player-waiting{ font-size:10px; color: var(--grey); flex-shrink:0; }
+  .pending-player-actions{ display:flex; gap:4px; flex-shrink:0; }
+  .pending-approve-btn, .pending-reject-btn{
+    width:22px; height:22px;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background: var(--panel);
+    color: var(--white);
+    cursor:pointer;
+    font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pending-approve-btn:hover{ border-color: var(--green); color: var(--green); }
+  .pending-reject-btn:hover{ border-color: var(--red); color: var(--red); }
 
   /* ---------- Main panel ---------- */
   .main{ padding:20px; }
@@ -1542,6 +1582,7 @@
     <div class="masthead-right-top">
       <div class="masthead-actions">
         <button class="btn btn-primary" id="finishBtn">Finish season &amp; crown champion</button>
+        <button class="btn btn-ghost" id="adminToggleBtn">🔒 Admin</button>
         <button class="btn btn-ghost" id="resetBtn">Reset all data</button>
       </div>
       <img id="collegeBadgeImg" class="badge-crest" width="66" height="66" alt="College Football">
@@ -1584,6 +1625,7 @@
     </div>
     <div id="playerList"></div>
     <button class="add-player-btn" id="addPlayerBtn">+ Add player</button>
+    <div id="pendingPlayersWrap"></div>
   </aside>
 
   <main class="main">
@@ -1723,6 +1765,8 @@ let marqueeGames = { nfl: null, college: null };
 let nflSlate = null;
 let activePlayerFilter = 'all';
 let expandedPlayerId = null;
+let isAdmin = (localStorage.getItem('loungeIsAdmin') === 'true');
+let pendingPlayers = [];
 let expandedCollegeHistoryWeek = null;
 let expandedNflHistoryWeek = null;
 
@@ -1758,6 +1802,50 @@ function confirmModal(title, message, confirmLabel){
     $('modalCancel').addEventListener('click', () => { closeModal(); resolve(false); });
     $('modalConfirm').addEventListener('click', () => { closeModal(); resolve(true); });
   });
+}
+
+function adminPasswordModal(){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">Admin unlock</div>
+      <div class="modal-message">Enter the admin password to unlock adding players directly, approving pending requests, and adjusting scores.</div>
+      <div class="modal-field">
+        <label>Password</label>
+        <input type="password" id="adminPasswordInput" placeholder="Password" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalConfirm">Unlock</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    const input = $('adminPasswordInput');
+    input.focus();
+    const submit = () => { closeModal(); resolve(input.value); };
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(null); });
+    $('modalConfirm').addEventListener('click', submit);
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
+  });
+}
+
+function toggleAdmin(){
+  return (async () => {
+    if(isAdmin){
+      isAdmin = false;
+      localStorage.removeItem('loungeIsAdmin');
+      render();
+      return;
+    }
+    const entered = await adminPasswordModal();
+    if(entered === null) return;
+    if(entered === ADMIN_PASSWORD){
+      isAdmin = true;
+      localStorage.setItem('loungeIsAdmin', 'true');
+      render();
+    } else {
+      await confirmModal('Wrong password', 'That password isn\'t right \u2014 try again.', 'OK');
+    }
+  })();
 }
 
 function formatKickoffLocal(iso){
@@ -1910,6 +1998,10 @@ function attachListeners(){
     },
     (err) => showBanner('Players sync error: ' + err.message, 'error')
   );
+  db.ref('pendingPlayers').on('value',
+    (snap) => { pendingPlayers = objToArray(snap.val()); render(); },
+    (err) => showBanner('Pending players sync error: ' + err.message, 'error')
+  );
   db.ref('predictions').on('value',
     (snap) => { predictions = objToArray(snap.val()); render(); },
     (err) => showBanner('Predictions sync error: ' + err.message, 'error')
@@ -1951,6 +2043,13 @@ const AI_WORKER_URL = "https://ai-analyst.troy-mercer.workers.dev";
 const AI_APP_SECRET = "j4klXrKzgkzMXXaHJ6An7jfBAoxqjwwG";
 const AI_PLAYER_ID = 'ai-analyst';
 
+// Simple shared password to unlock admin actions (adding players directly,
+// approving pending player requests, and adjusting scores). Change this to
+// whatever you want the group's admin password to be. Note this is a basic
+// friction gate for a friends' pool, not real security — anyone who views
+// the page source can see it, so don't reuse a password you care about.
+const ADMIN_PASSWORD = "Thetimeisnow2026!!";
+
 async function ensureAIPlayer(){
   if(players.find(p => p.id === AI_PLAYER_ID)) return;
   if(!firebaseReady) return;
@@ -1964,6 +2063,11 @@ async function ensureAIPlayer(){
 async function savePlayers(){
   if(!firebaseReady) return;
   try{ await db.ref('players').set(arrayToObj(players)); }
+  catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
+}
+async function savePendingPlayers(){
+  if(!firebaseReady) return;
+  try{ await db.ref('pendingPlayers').set(arrayToObj(pendingPlayers)); }
   catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
 }
 async function savePredictions(){
@@ -2046,13 +2150,19 @@ function getWeeklyStreak(playerId){
 }
 
 function renderPlayerStatsPanel(p){
-  const bonusHtml = `
+  const currentBonus = Number(p.bonusPoints) || 0;
+  const bonusHtml = isAdmin ? `
     <div class="bonus-adjust-row">
       <label>Manual score adjustment</label>
       <div class="bonus-adjust-controls">
-        <input type="number" class="bonus-adjust-input" step="0.5" value="${Number(p.bonusPoints) || 0}" data-player-id="${p.id}">
+        <input type="number" class="bonus-adjust-input" step="0.5" value="${currentBonus}" data-player-id="${p.id}">
         <button class="bonus-adjust-save" data-player-id="${p.id}">Save</button>
       </div>
+    </div>
+  ` : `
+    <div class="bonus-adjust-row">
+      <label>Manual score adjustment <span class="bonus-adjust-locked">(admin only)</span></label>
+      <div class="bonus-adjust-readonly">${currentBonus > 0 ? '+' : ''}${currentBonus}</div>
     </div>
   `;
   const s = getPlayerStats(p.id);
@@ -2084,13 +2194,25 @@ function renderPlayerStatsPanel(p){
 
 function getBeatAiStats(playerId){
   let weeksBeaten = 0;
-  WEEKS.forEach(w => {
-    const aiGraded = predictions.filter(p => p.playerId === AI_PLAYER_ID && p.week === w && p.result !== 'pending').length;
-    if(aiGraded === 0) return;
-    const aiCorrect = predictions.filter(p => p.playerId === AI_PLAYER_ID && p.week === w && p.result === 'correct').length;
-    if(aiCorrect > 0) return;
-    const playerCorrect = predictions.filter(p => p.playerId === playerId && p.week === w && p.result === 'correct').length;
-    if(playerCorrect >= 1) weeksBeaten++;
+  [
+    { slates: collegeSlates, picks: collegePicks },
+    { slates: nflPick6Slates, picks: nflPick6Picks }
+  ].forEach(({ slates, picks }) => {
+    slates.forEach(slate => {
+      const games = slate.games || [];
+      const gradedGames = games.filter(g => g.winner && g.winner !== 'pending');
+      if(gradedGames.length === 0) return;
+      const aiCorrect = gradedGames.filter(g => {
+        const aiPick = picks.find(p => p.gameId === g.id && p.playerId === AI_PLAYER_ID);
+        return aiPick && aiPick.pickedTeam === g.winner;
+      }).length;
+      if(aiCorrect > 0) return; // AI got at least one right this week — can't be beaten
+      const playerCorrect = gradedGames.filter(g => {
+        const pick = picks.find(p => p.gameId === g.id && p.playerId === playerId);
+        return pick && pick.pickedTeam === g.winner;
+      }).length;
+      if(playerCorrect >= 1) weeksBeaten++;
+    });
   });
   return { weeksBeaten, bonus: weeksBeaten * 1.5 };
 }
@@ -2523,8 +2645,8 @@ function renderNflHistory(){
 function renderBeatAiBoard(){
   const wrap = $('beatAiWrap');
   const humanPlayers = players.filter(p => !p.isAI);
-  const aiHasGradedWeek = WEEKS.some(w =>
-    predictions.some(p => p.playerId === AI_PLAYER_ID && p.week === w && p.result !== 'pending')
+  const aiHasGradedWeek = collegeSlates.concat(nflPick6Slates).some(slate =>
+    (slate.games || []).some(g => g.winner && g.winner !== 'pending')
   );
 
   if(humanPlayers.length === 0 || !aiHasGradedWeek){
@@ -2695,6 +2817,46 @@ function renderWeekOptions(){
   $('filterWeek').innerHTML = '<option value="all">All weeks</option>' +
     WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
   $('aiWeek').innerHTML = WEEKS.map(w => `<option value="${w}">${w}</option>`).join('');
+}
+
+function renderPendingPlayers(){
+  const wrap = $('pendingPlayersWrap');
+  if(!wrap) return;
+  if(pendingPlayers.length === 0){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <div class="pending-players-title">Pending approval</div>
+    ${pendingPlayers.map(p => `
+      <div class="pending-player-row">
+        <span class="pending-player-name">${escapeHtml(p.name)}${p.nickname ? ` <span class="pending-player-nick">"${escapeHtml(p.nickname)}"</span>` : ''}</span>
+        ${isAdmin ? `
+          <span class="pending-player-actions">
+            <button class="pending-approve-btn" data-id="${p.id}" title="Approve">✓</button>
+            <button class="pending-reject-btn" data-id="${p.id}" title="Reject">✕</button>
+          </span>
+        ` : `<span class="pending-player-waiting">waiting</span>`}
+      </div>
+    `).join('')}
+  `;
+  if(isAdmin){
+    wrap.querySelectorAll('.pending-approve-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const p = pendingPlayers.find(x => x.id === btn.dataset.id);
+        if(!p) return;
+        players.push({ id: uid(), name: p.name, nickname: p.nickname, photo: null });
+        pendingPlayers = pendingPlayers.filter(x => x.id !== p.id);
+        await savePlayers();
+        await savePendingPlayers();
+        render();
+      });
+    });
+    wrap.querySelectorAll('.pending-reject-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        pendingPlayers = pendingPlayers.filter(x => x.id !== btn.dataset.id);
+        await savePendingPlayers();
+        render();
+      });
+    });
+  }
 }
 
 function renderPlayers(){
@@ -3041,6 +3203,11 @@ function applyLockState(){
     });
   document.querySelectorAll('.player-remove, .add-player-btn')
     .forEach(el => { el.style.display = season.finished ? 'none' : ''; });
+  const adminBtn = $('adminToggleBtn');
+  if(adminBtn){
+    adminBtn.textContent = isAdmin ? '🔓 Admin' : '🔒 Admin';
+    adminBtn.classList.toggle('admin-unlocked', isAdmin);
+  }
 }
 
 $('finishBtn').addEventListener('click', async () => {
@@ -3234,6 +3401,7 @@ function render(){
   renderPlayerOptions();
   renderWeekOptions();
   renderPlayers();
+  renderPendingPlayers();
   renderPredictions();
   renderTicker();
   renderCountdowns();
@@ -3250,9 +3418,16 @@ function render(){
 $('addPlayerBtn').addEventListener('click', async () => {
   const result = await addPlayerModal();
   if(!result) return;
-  players.push({ id: uid(), name: result.name, nickname: result.nickname, photo: null });
-  await savePlayers();
-  render();
+  if(isAdmin){
+    players.push({ id: uid(), name: result.name, nickname: result.nickname, photo: null });
+    await savePlayers();
+    render();
+  } else {
+    pendingPlayers.push({ id: uid(), name: result.name, nickname: result.nickname, requestedAt: Date.now() });
+    await savePendingPlayers();
+    render();
+    await confirmModal('Request sent', `${result.name} has been requested \u2014 an admin needs to approve it before they show up in the group.`, 'OK');
+  }
 });
 
 $('addPredBtn').addEventListener('click', async () => {
@@ -3330,6 +3505,8 @@ $('resetBtn').addEventListener('click', async () => {
   await savePredictions();
   render();
 });
+
+$('adminToggleBtn').addEventListener('click', toggleAdmin);
 
 if(initFirebase()){
   attachListeners();
