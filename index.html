@@ -2225,9 +2225,13 @@ async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
 }
 
 function pick6LiveLineHtml(game){
-  if(!game.live || game.live.status === 'scheduled') return '';
+  const winnerSet = game.winner && game.winner !== 'pending';
+  if(!game.live || (game.live.status === 'scheduled' && !winnerSet)) return '';
   const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
-  if(game.live.status === 'final'){
+  // A winner being set (whether auto-graded or picked manually) always means the
+  // game is over, even if the last live-score check happened to catch it mid-play
+  // or hasn't run again since it wrapped up — don't trust a stale "LIVE" status.
+  if(game.live.status === 'final' || winnerSet){
     return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span><span class="live-score">${scoreText}</span></div>`;
   }
   return `<div class="pick6-live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span><span class="live-score">${scoreText}</span>${game.live.statusDetail ? `<span class="live-detail">${escapeHtml(game.live.statusDetail)}</span>` : ''}</div>`;
