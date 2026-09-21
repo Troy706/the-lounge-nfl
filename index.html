@@ -730,6 +730,10 @@
   }
   .comments-list{ margin-top:6px; display:flex; flex-direction:column; gap:3px; }
   .comment-item{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:4px;
     font-size:11px;
     color: var(--white);
     background: var(--panel);
@@ -737,6 +741,23 @@
     padding:4px 8px;
   }
   .comment-author{ color: var(--gold); font-weight:600; }
+  .comment-like-btn, .comment-dislike-btn{
+    flex-shrink:0;
+    background: none;
+    border:1px solid var(--line);
+    color: var(--grey);
+    font-size:10px;
+    padding:1px 6px;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:3px;
+  }
+  .comment-like-btn{ margin-left:auto; }
+  .comment-like-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .comment-dislike-btn:hover{ border-color: var(--red); color: var(--red); }
+  .comment-like-count{ font-size:10px; }
   .comment-row{
     display:flex;
     align-items:center;
@@ -1823,6 +1844,25 @@ function initials(name){
   return (name || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()).join('');
 }
 
+const PLAYER_COLOR_PALETTE = [
+  { c: '#4fd1ff', bg: 'rgba(79,209,255,0.18)' },
+  { c: '#ff6b9d', bg: 'rgba(255,107,157,0.18)' },
+  { c: '#ffb347', bg: 'rgba(255,179,71,0.18)' },
+  { c: '#a78bfa', bg: 'rgba(167,139,250,0.18)' },
+  { c: '#4ade80', bg: 'rgba(74,222,128,0.18)' },
+  { c: '#f472b6', bg: 'rgba(244,114,182,0.18)' },
+  { c: '#38bdf8', bg: 'rgba(56,189,248,0.18)' },
+  { c: '#facc15', bg: 'rgba(250,204,21,0.18)' },
+  { c: '#fb923c', bg: 'rgba(251,146,60,0.18)' },
+  { c: '#2dd4bf', bg: 'rgba(45,212,191,0.18)' }
+];
+function getPlayerColor(playerId){
+  let hash = 0;
+  const s = playerId || '';
+  for(let i = 0; i < s.length; i++){ hash = (hash * 31 + s.charCodeAt(i)) >>> 0; }
+  return PLAYER_COLOR_PALETTE[hash % PLAYER_COLOR_PALETTE.length];
+}
+
 function autoGrow(el){
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
@@ -2263,12 +2303,13 @@ function renderCollegePick6(){
             const picked = pick ? pick.pickedTeam : null;
             const correct = winnerSet && picked && picked === game.winner;
             const wrong = winnerSet && picked && picked !== game.winner;
+            const pc = getPlayerColor(p.id);
             return `
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
-                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
@@ -2348,12 +2389,13 @@ function renderNflPick6(){
             const picked = pick ? pick.pickedTeam : null;
             const correct = winnerSet && picked && picked === game.winner;
             const wrong = winnerSet && picked && picked !== game.winner;
+            const pc = getPlayerColor(p.id);
             return `
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
-                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
@@ -2419,7 +2461,7 @@ function renderPick6History(containerId, slates, picksArr, currentWeekKey, expan
         if(!pick) return '';
         const correct = winnerSet && pick.pickedTeam === game.winner;
         const wrong = winnerSet && pick.pickedTeam !== game.winner;
-        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.name)}</span><span class="history-pick-value">${escapeHtml(pick.pickedTeam)}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
+        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.name)}</span><span class="history-pick-value" style="color:${getPlayerColor(p.id).c};">${escapeHtml(pick.pickedTeam)}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
       }).join('');
       return `
         <div class="history-game-card">
@@ -2803,7 +2845,7 @@ function renderPredictions(){
           <div class="comments-list">
             ${(row.comments || []).map(c => {
               const commenter = players.find(p => p.id === c.playerId);
-              return `<div class="comment-item"><span class="comment-author">${escapeHtml(commenter ? (commenter.name) : 'Someone')}:</span> ${escapeHtml(c.text)}</div>`;
+              return `<div class="comment-item"><span class="comment-author">${escapeHtml(commenter ? (commenter.name) : 'Someone')}:</span> ${escapeHtml(c.text)} <button class="comment-like-btn" data-comment-id="${c.id}">👍 <span class="comment-like-count">${c.likes || 0}</span></button><button class="comment-dislike-btn" data-comment-id="${c.id}">👎 <span class="comment-like-count">${c.dislikes || 0}</span></button></div>`;
             }).join('')}
           </div>
           <div class="comment-row">
@@ -2868,6 +2910,26 @@ function renderPredictions(){
     };
     commentPostBtn.addEventListener('click', postComment);
     commentInput.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); postComment(); } });
+    tr.querySelectorAll('.comment-like-btn').forEach(likeBtn => {
+      likeBtn.addEventListener('click', async () => {
+        const commentId = likeBtn.dataset.commentId;
+        const comment = (row.comments || []).find(c => c.id === commentId);
+        if(!comment) return;
+        comment.likes = (comment.likes || 0) + 1;
+        await savePredictions();
+        renderPredictions();
+      });
+    });
+    tr.querySelectorAll('.comment-dislike-btn').forEach(dislikeBtn => {
+      dislikeBtn.addEventListener('click', async () => {
+        const commentId = dislikeBtn.dataset.commentId;
+        const comment = (row.comments || []).find(c => c.id === commentId);
+        if(!comment) return;
+        comment.dislikes = (comment.dislikes || 0) + 1;
+        await savePredictions();
+        renderPredictions();
+      });
+    });
     const resultSel = tr.querySelector('.result-select');
     resultSel.addEventListener('change', async (e) => {
       row.result = e.target.value;
