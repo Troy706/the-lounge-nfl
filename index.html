@@ -2227,7 +2227,7 @@ function renderCollegePick6(){
         .map((r, i) => `
           <div class="beat-ai-row">
             <div class="beat-ai-rank">#${i+1}</div>
-            <div class="beat-ai-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+            <div class="beat-ai-name">${escapeHtml(r.player.name)}</div>
             <div class="beat-ai-pts">${r.score} pt${r.score === 1 ? '' : 's'}</div>
           </div>
         `).join('')}
@@ -2265,7 +2265,7 @@ function renderCollegePick6(){
             const wrong = winnerSet && picked && picked !== game.winner;
             return `
               <div class="college-pick-row">
-                <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
+                <span class="college-pick-name">${escapeHtml(p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
                   <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
                   <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
@@ -2312,7 +2312,7 @@ function renderNflPick6(){
         .map((r, i) => `
           <div class="beat-ai-row">
             <div class="beat-ai-rank">#${i+1}</div>
-            <div class="beat-ai-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+            <div class="beat-ai-name">${escapeHtml(r.player.name)}</div>
             <div class="beat-ai-pts">${r.score} pt${r.score === 1 ? '' : 's'}</div>
           </div>
         `).join('')}
@@ -2350,7 +2350,7 @@ function renderNflPick6(){
             const wrong = winnerSet && picked && picked !== game.winner;
             return `
               <div class="college-pick-row">
-                <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
+                <span class="college-pick-name">${escapeHtml(p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
                   <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
                   <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
@@ -2419,7 +2419,7 @@ function renderPick6History(containerId, slates, picksArr, currentWeekKey, expan
         if(!pick) return '';
         const correct = winnerSet && pick.pickedTeam === game.winner;
         const wrong = winnerSet && pick.pickedTeam !== game.winner;
-        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.nickname || p.name)}</span><span class="history-pick-value">${escapeHtml(pick.pickedTeam)}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
+        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.name)}</span><span class="history-pick-value">${escapeHtml(pick.pickedTeam)}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
       }).join('');
       return `
         <div class="history-game-card">
@@ -2433,7 +2433,7 @@ function renderPick6History(containerId, slates, picksArr, currentWeekKey, expan
 
     const tallyHtml = humanPlayers.map(p => {
       const t = getPick6WeekTally(slate, collegePicks.concat(nflPick6Picks), p.id);
-      return `${escapeHtml(p.nickname || p.name)} ${t.correct}/${t.graded || totalCount}`;
+      return `${escapeHtml(p.name)} ${t.correct}/${t.graded || totalCount}`;
     }).join(' \u2022 ');
 
     return `
@@ -2505,7 +2505,7 @@ function renderBeatAiBoard(){
     ${ranked.map((r, i) => `
       <div class="beat-ai-row">
         <div class="beat-ai-rank">#${i+1}</div>
-        <div class="beat-ai-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+        <div class="beat-ai-name">${escapeHtml(r.player.name)}</div>
         <div class="beat-ai-weeks">${r.stats.weeksBeaten} week${r.stats.weeksBeaten === 1 ? '' : 's'} beaten</div>
         <div class="beat-ai-pts">+${r.stats.bonus.toFixed(1)}</div>
       </div>
@@ -2536,7 +2536,7 @@ function renderPredictionRecordBoard(){
     ${ranked.map((r, i) => `
       <div class="prediction-record-row">
         <div class="beat-ai-rank">#${i+1}</div>
-        <div class="prediction-record-name">${escapeHtml(r.player.nickname || r.player.name)}</div>
+        <div class="prediction-record-name">${escapeHtml(r.player.name)}</div>
         <div class="prediction-record-stat">${r.record.wins}-${r.record.losses} <span class="prediction-record-pct">${Math.round(r.record.winPct*100)}%</span></div>
       </div>
     `).join('')}
@@ -2551,10 +2551,10 @@ function renderTicker(){
   }
   const ranked = [...players].sort((a,b)=>scoreFor(b.id)-scoreFor(a.id));
   const leader = ranked[0];
-  const parts = ranked.map(p => `${p.nickname || p.name}: ${scoreFor(p.id)} PTS`);
+  const parts = ranked.map(p => `${p.name}: ${scoreFor(p.id)} PTS`);
   const lead = season.finished
     ? `\uD83C\uDFC6 SEASON CHAMPION: ${players.filter(p=>season.winnerIds.includes(p.id)).map(w=>(w.nickname||w.name).toUpperCase()).join(' & ')}`
-    : `LEADING THE PACK: ${(leader.nickname || leader.name).toUpperCase()}`;
+    : `LEADING THE PACK: ${(leader.name).toUpperCase()}`;
   $('tickerTrack').textContent =
     `THE LOUNGE${sep}${lead}${sep}` +
     parts.join(sep) + sep;
@@ -2798,12 +2798,12 @@ function renderPredictions(){
         </td>
         <td data-label="Prediction">
           <textarea class="pred-text-input" rows="1">${escapeHtml(row.text)}</textarea>
-          ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.nickname || addedByPlayer.name)}</div>` : ''}
+          ${addedByPlayer ? `<div class="added-by-tag">Added by ${escapeHtml(addedByPlayer.name)}</div>` : ''}
           ${isAutoAiPick ? `<div class="added-by-tag ai-tag"><img src="${ICON_AI_AVATAR}" width="16" height="16" style="vertical-align:-3px; border-radius:3px;"> AI predicted</div>` : ''}
           <div class="comments-list">
             ${(row.comments || []).map(c => {
               const commenter = players.find(p => p.id === c.playerId);
-              return `<div class="comment-item"><span class="comment-author">${escapeHtml(commenter ? (commenter.nickname || commenter.name) : 'Someone')}:</span> ${escapeHtml(c.text)}</div>`;
+              return `<div class="comment-item"><span class="comment-author">${escapeHtml(commenter ? (commenter.name) : 'Someone')}:</span> ${escapeHtml(c.text)}</div>`;
             }).join('')}
           </div>
           <div class="comment-row">
@@ -2849,7 +2849,7 @@ function renderPredictions(){
     const commentInput = tr.querySelector('.comment-input');
     const commentCount = tr.querySelector('.comment-count');
     const commentPostBtn = tr.querySelector('.comment-post-btn');
-    const playerOptionsHtmlForComment = players.map(p => `<option value="${p.id}">${escapeHtml(p.nickname || p.name)}</option>`).join('');
+    const playerOptionsHtmlForComment = players.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
     commentAuthorSel.innerHTML = '<option value="">Who\'s commenting?</option>' + playerOptionsHtmlForComment;
     commentInput.addEventListener('input', (e) => {
       commentCount.textContent = `${e.target.value.length}/80`;
@@ -2918,7 +2918,7 @@ function renderPodium(){
           <div class="podium-avatar-frame ${cls}">
             <div class="podium-avatar ${podiumAiClass}" ${avatarStyle}>${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="54" height="54" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}</div>
           </div>
-          <div class="podium-name">${escapeHtml(p.nickname || p.name)}${streakBadgeHtml(p.id)}</div>
+          <div class="podium-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
           <div class="podium-score">${scoreFor(p.id)} pts</div>
           <div class="podium-bar">#${rankIdx+1}</div>
         </div>
@@ -2950,7 +2950,7 @@ function renderTrophyBanner(){
   const winners = players.filter(p => season.winnerIds.includes(p.id));
   if(winners.length === 0){ banner.style.display = 'none'; return; }
   const score = scoreFor(winners[0].id);
-  const names = winners.map(w => w.nickname || w.name).join(' & ');
+  const names = winners.map(w => w.name).join(' & ');
   const dateStr = season.finishedAt ? new Date(season.finishedAt).toLocaleDateString(undefined, {month:'long', day:'numeric', year:'numeric'}) : '';
   banner.style.display = 'flex';
   banner.className = 'trophy-banner';
@@ -2998,7 +2998,7 @@ $('finishBtn').addEventListener('click', async () => {
   const ranked = [...players].sort((a,b) => scoreFor(b.id) - scoreFor(a.id));
   const topScore = scoreFor(ranked[0].id);
   const winners = ranked.filter(p => scoreFor(p.id) === topScore);
-  const label = winners.map(w => w.nickname || w.name).join(' & ');
+  const label = winners.map(w => w.name).join(' & ');
   const ok = await confirmModal('Finish season', `Lock in final scores and crown ${label} (${topScore} pts) as champion${winners.length>1?'s':''}?`, 'Crown champion');
   if(!ok) return;
   season = { finished:true, winnerIds: winners.map(w=>w.id), finishedAt: Date.now() };
