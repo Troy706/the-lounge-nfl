@@ -2244,6 +2244,7 @@ function renderCollegePick6(){
 
   const gamesHtml = slate.games.map(game => {
     const winnerSet = game.winner && game.winner !== 'pending';
+    const locked = winnerSet || (game.live && game.live.status === 'in_progress');
     return `
       <div class="college-game-card">
         <div class="college-game-header">
@@ -2266,8 +2267,8 @@ function renderCollegePick6(){
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
-                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
@@ -2328,6 +2329,7 @@ function renderNflPick6(){
 
   const gamesHtml = slate.games.map(game => {
     const winnerSet = game.winner && game.winner !== 'pending';
+    const locked = winnerSet || (game.live && game.live.status === 'in_progress');
     return `
       <div class="college-game-card">
         <div class="college-game-header nfl6-header">
@@ -2350,8 +2352,8 @@ function renderNflPick6(){
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.nickname || p.name)}${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}</span>
                 <div class="college-pick-btns">
-                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${winnerSet ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
