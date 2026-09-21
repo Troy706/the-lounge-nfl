@@ -2048,7 +2048,7 @@ const AI_PLAYER_ID = 'ai-analyst';
 // whatever you want the group's admin password to be. Note this is a basic
 // friction gate for a friends' pool, not real security — anyone who views
 // the page source can see it, so don't reuse a password you care about.
-const ADMIN_PASSWORD = "Thetimeisnow2026!!";
+const ADMIN_PASSWORD = "PASTE_ADMIN_PASSWORD_HERE";
 
 async function ensureAIPlayer(){
   if(players.find(p => p.id === AI_PLAYER_ID)) return;
@@ -2108,10 +2108,20 @@ function scoreFor(playerId){
 }
 
 function getStreak(playerId){
-  const rows = predictions.filter(p => p.playerId === playerId && p.result !== 'pending');
+  const allSlates = collegeSlates.concat(nflPick6Slates).sort((a, b) => (a.generatedAt || 0) - (b.generatedAt || 0));
+  const rows = [];
+  allSlates.forEach(slate => {
+    const picksArr = collegeSlates.includes(slate) ? collegePicks : nflPick6Picks;
+    (slate.games || []).forEach(game => {
+      if(!game.winner || game.winner === 'pending') return;
+      const pick = picksArr.find(p => p.gameId === game.id && p.playerId === playerId);
+      if(!pick) return;
+      rows.push(pick.pickedTeam === game.winner ? 'correct' : 'incorrect');
+    });
+  });
   let count = 0, type = null;
   for(let i = rows.length - 1; i >= 0; i--){
-    const r = rows[i].result;
+    const r = rows[i];
     if(type === null){ type = r; count = 1; }
     else if(r === type){ count++; }
     else break;
@@ -2128,22 +2138,35 @@ function streakBadgeHtml(playerId){
 }
 
 function getPlayerStats(playerId){
-  const own = predictions.filter(p => p.playerId === playerId);
-  const correct = own.filter(p => p.result === 'correct').length;
-  const incorrect = own.filter(p => p.result === 'incorrect').length;
-  const pending = own.filter(p => p.result === 'pending').length;
+  const allPicks = collegePicks.concat(nflPick6Picks).filter(p => p.playerId === playerId);
+  const allSlates = collegeSlates.concat(nflPick6Slates);
+  let correct = 0, incorrect = 0, pending = 0;
+  allPicks.forEach(pick => {
+    const slate = allSlates.find(s => (s.games || []).some(g => g.id === pick.gameId));
+    const game = slate && slate.games.find(g => g.id === pick.gameId);
+    if(!game) return;
+    if(!game.winner || game.winner === 'pending'){ pending++; }
+    else if(pick.pickedTeam === game.winner){ correct++; }
+    else { incorrect++; }
+  });
   const graded = correct + incorrect;
   const accuracy = graded > 0 ? Math.round((correct / graded) * 100) : 0;
-  return { total: own.length, correct, incorrect, pending, accuracy };
+  return { total: allPicks.length, correct, incorrect, pending, accuracy };
 }
 
 function getWeeklyStreak(playerId){
-  const weeksWithGraded = WEEKS.filter(w =>
-    predictions.some(p => p.playerId === playerId && p.week === w && p.result !== 'pending')
-  );
+  const gradedSlates = collegeSlates.concat(nflPick6Slates)
+    .filter(s => (s.games || []).some(g => g.winner && g.winner !== 'pending'))
+    .sort((a, b) => (a.generatedAt || 0) - (b.generatedAt || 0));
   let streak = 0;
-  for(let i = weeksWithGraded.length - 1; i >= 0; i--){
-    const hit = predictions.some(p => p.playerId === playerId && p.week === weeksWithGraded[i] && p.result === 'correct');
+  for(let i = gradedSlates.length - 1; i >= 0; i--){
+    const slate = gradedSlates[i];
+    const picksArr = collegeSlates.includes(slate) ? collegePicks : nflPick6Picks;
+    const gradedGames = (slate.games || []).filter(g => g.winner && g.winner !== 'pending');
+    const hit = gradedGames.some(g => {
+      const pick = picksArr.find(p => p.gameId === g.id && p.playerId === playerId);
+      return pick && pick.pickedTeam === g.winner;
+    });
     if(hit){ streak++; } else { break; }
   }
   return streak;
