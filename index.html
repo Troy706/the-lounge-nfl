@@ -2373,13 +2373,22 @@ function pick6LiveLineHtml(game){
     }
     return '';
   }
-  const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
   // A winner being set (whether auto-graded or picked manually) always means the
   // game is over, even if the last live-score check happened to catch it mid-play
   // or hasn't run again since it wrapped up — don't trust a stale "LIVE" status.
   if(game.live.status === 'final' || winnerSet){
-    return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span><span class="live-score">${scoreText}</span></div>`;
+    // Only trust the score NUMBER if the live checker itself confirmed the game
+    // finished — if a winner was set some other way (manually, most likely) while
+    // the live data is still sitting on a stale in-progress snapshot, showing that
+    // old number labeled FINAL would be actively misleading. Show FINAL with no
+    // number rather than a number we can't vouch for.
+    if(game.live.completed){
+      const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
+      return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span><span class="live-score">${scoreText}</span></div>`;
+    }
+    return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span></div>`;
   }
+  const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
   return `<div class="pick6-live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span><span class="live-score">${scoreText}</span>${game.live.statusDetail ? `<span class="live-detail">${escapeHtml(game.live.statusDetail)}</span>` : ''}</div>`;
 }
 
