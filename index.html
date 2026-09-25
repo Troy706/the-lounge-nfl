@@ -126,6 +126,7 @@
   }
   .live-badge.live-final{ background: rgba(255,255,255,0.1); color: var(--white); }
   .live-badge.live-in-progress{ background: rgba(228,0,43,0.2); color: var(--red); animation: live-pulse 1.6s ease-in-out infinite; }
+  .live-badge.live-locked{ background: rgba(255,184,28,0.15); color: var(--gold); }
   @keyframes live-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
   .live-score{ font-family: var(--font-display); font-weight:700; font-size:20px; color: var(--gold); }
   .countdown-item.countdown-college .live-score{ color: var(--green); }
@@ -2371,7 +2372,15 @@ async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
 
 function pick6LiveLineHtml(game){
   const winnerSet = game.winner && game.winner !== 'pending';
-  if(!game.live || (game.live.status === 'scheduled' && !winnerSet)) return '';
+  const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
+  if(!game.live || (game.live.status === 'scheduled' && !winnerSet)){
+    // No live score data to show, but if kickoff has passed we still owe people
+    // an explanation for why the picks are locked.
+    if(!winnerSet && kickoffPassed){
+      return `<div class="pick6-live-line"><span class="live-badge live-locked">\uD83D\uDD12 Kickoff passed</span></div>`;
+    }
+    return '';
+  }
   const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
   // A winner being set (whether auto-graded or picked manually) always means the
   // game is over, even if the last live-score check happened to catch it mid-play
@@ -2426,7 +2435,8 @@ function renderCollegePick6(){
 
   const gamesHtml = slate.games.map(game => {
     const winnerSet = game.winner && game.winner !== 'pending';
-    const locked = winnerSet || (game.live && game.live.status === 'in_progress');
+    const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
+    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress');
     return `
       <div class="college-game-card">
         <div class="college-game-header">
@@ -2512,7 +2522,8 @@ function renderNflPick6(){
 
   const gamesHtml = slate.games.map(game => {
     const winnerSet = game.winner && game.winner !== 'pending';
-    const locked = winnerSet || (game.live && game.live.status === 'in_progress');
+    const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
+    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress');
     return `
       <div class="college-game-card">
         <div class="college-game-header nfl6-header">
