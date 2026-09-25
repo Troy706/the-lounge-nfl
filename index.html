@@ -2327,14 +2327,10 @@ async function setNflPick6Winner(weekKey, gameId, winner){
 }
 
 async function setNflPick6Pick(weekKey, gameId, playerId, pickedTeam){
-  let pick = nflPick6Picks.find(p => p.gameId === gameId && p.playerId === playerId);
-  if(pick){
-    if(pick.pickedTeam === pickedTeam){ return; }
-    pick.pickedTeam = pickedTeam;
-  } else {
-    pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
-    nflPick6Picks.push(pick);
-  }
+  const existing = nflPick6Picks.find(p => p.gameId === gameId && p.playerId === playerId);
+  if(existing) return; // picks are locked in once made — no changing your mind
+  const pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
+  nflPick6Picks.push(pick);
   await saveNflPick6Picks();
   renderNflPick6();
 }
@@ -2358,14 +2354,10 @@ async function setCollegeWinner(weekKey, gameId, winner){
 }
 
 async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
-  let pick = collegePicks.find(p => p.gameId === gameId && p.playerId === playerId);
-  if(pick){
-    if(pick.pickedTeam === pickedTeam){ return; }
-    pick.pickedTeam = pickedTeam;
-  } else {
-    pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
-    collegePicks.push(pick);
-  }
+  const existing = collegePicks.find(p => p.gameId === gameId && p.playerId === playerId);
+  if(existing) return; // picks are locked in once made — no changing your mind
+  const pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
+  collegePicks.push(pick);
   await saveCollegePicks();
   renderCollegePick6();
 }
@@ -2460,8 +2452,8 @@ function renderCollegePick6(){
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.name)}</span>${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}
                 <div class="college-pick-btns">
-                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
@@ -2547,8 +2539,8 @@ function renderNflPick6(){
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.name)}</span>${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}
                 <div class="college-pick-btns">
-                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${locked ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${locked ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
                 </div>
               </div>
             `;
