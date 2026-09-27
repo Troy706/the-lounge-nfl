@@ -596,6 +596,48 @@
   .bonus-adjust-save:hover{ border-color: var(--gold); color: var(--gold); }
   .bonus-adjust-locked{ text-transform:none; letter-spacing:normal; font-size:10px; }
   .bonus-adjust-readonly{ font-family: var(--font-display); font-weight:600; font-size:13px; color: var(--white); }
+  .pin-row{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--line);
+  }
+  .pin-row label{
+    display:block;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--grey);
+    margin-bottom:5px;
+  }
+  .pin-row-controls{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .pin-status{ font-size:11px; color: var(--white); }
+  .pin-set-btn{
+    background: var(--panel);
+    border:1px solid var(--line);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .pin-set-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .pick-verify-btn{
+    background: rgba(255,184,28,0.15);
+    border:1px solid var(--gold);
+    color: var(--gold);
+    font-size:10px;
+    font-weight:600;
+    padding:4px 8px;
+    border-radius:3px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .pick-verify-btn:hover{ background: rgba(255,184,28,0.28); }
   .stats-empty{ font-size:12px; color: var(--grey); }
 
   .add-player-btn{
@@ -1275,6 +1317,7 @@
   }
   .history-pick-name{ flex-shrink:0; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .history-pick-value{ color: var(--grey); text-align:right; }
+  .history-unverified{ font-size:9px; color: var(--grey); font-style:italic; }
   .college-wrap .beat-ai-title{ color: var(--green); }
   .college-week-badge{
     display:inline-block;
@@ -1354,7 +1397,7 @@
     border-radius:3px;
   }
   .college-pick-name{ font-size:12px; flex-shrink:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:90px; }
-  .college-pick-btns{ display:flex; gap:4px; }
+  .college-pick-btns{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
   .college-pick-btn{
     background: var(--panel);
     border:1px solid var(--line);
@@ -1849,6 +1892,54 @@ function toggleAdmin(){
   })();
 }
 
+function pinEntryModal(player){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">Confirm it's you, ${escapeHtml(player.nickname || player.name)}</div>
+      <div class="modal-message">Enter your PIN to lock in this pick. Until then it won't count.</div>
+      <div class="modal-field">
+        <label>PIN</label>
+        <input type="password" inputmode="numeric" id="pinEntryInput" placeholder="PIN" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalConfirm">Confirm pick</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    const input = $('pinEntryInput');
+    input.focus();
+    const submit = () => { closeModal(); resolve(input.value); };
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(null); });
+    $('modalConfirm').addEventListener('click', submit);
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
+  });
+}
+
+function setPlayerPinModal(player){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">${player.pin ? 'Change' : 'Set'} PIN for ${escapeHtml(player.nickname || player.name)}</div>
+      <div class="modal-message">Once you set a PIN, your Pick 6 picks won't count until you confirm them with it \u2014 that's what stops someone else picking for you. Keep it simple, this just needs to stop a prank, not a hacker.</div>
+      <div class="modal-field">
+        <label>New PIN</label>
+        <input type="password" inputmode="numeric" id="pinSetInput" placeholder="e.g. 4 digits" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalConfirm">${player.pin ? 'Update' : 'Set'} PIN</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    const input = $('pinSetInput');
+    input.focus();
+    const submit = () => { closeModal(); resolve(input.value); };
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(null); });
+    $('modalConfirm').addEventListener('click', submit);
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
+  });
+}
+
 function formatKickoffLocal(iso){
   const d = new Date(iso);
   if(isNaN(d.getTime())) return 'Time TBD';
@@ -2116,7 +2207,7 @@ function getStreak(playerId){
     (slate.games || []).forEach(game => {
       if(!game.winner || game.winner === 'pending') return;
       const pick = picksArr.find(p => p.gameId === game.id && p.playerId === playerId);
-      if(!pick) return;
+      if(!pick || !isPickVerified(pick)) return;
       rows.push(pick.pickedTeam === game.winner ? 'correct' : 'incorrect');
     });
   });
@@ -2146,6 +2237,7 @@ function getPlayerStats(playerId){
     const slate = allSlates.find(s => (s.games || []).some(g => g.id === pick.gameId));
     const game = slate && slate.games.find(g => g.id === pick.gameId);
     if(!game) return;
+    if(!isPickVerified(pick)){ pending++; return; }
     if(!game.winner || game.winner === 'pending'){ pending++; }
     else if(pick.pickedTeam === game.winner){ correct++; }
     else { incorrect++; }
@@ -2166,7 +2258,7 @@ function getWeeklyStreak(playerId){
     const gradedGames = (slate.games || []).filter(g => g.winner && g.winner !== 'pending');
     const hit = gradedGames.some(g => {
       const pick = picksArr.find(p => p.gameId === g.id && p.playerId === playerId);
-      return pick && pick.pickedTeam === g.winner;
+      return pick && isPickVerified(pick) && pick.pickedTeam === g.winner;
     });
     if(hit){ streak++; } else { break; }
   }
@@ -2189,9 +2281,18 @@ function renderPlayerStatsPanel(p){
       <div class="bonus-adjust-readonly">${currentBonus > 0 ? '+' : ''}${currentBonus}</div>
     </div>
   `;
+  const pinHtml = `
+    <div class="pin-row">
+      <label>Pick verification PIN</label>
+      <div class="pin-row-controls">
+        <span class="pin-status">${p.pin ? '\uD83D\uDD10 PIN set' : 'No PIN set \u2014 picks aren\'t protected'}</span>
+        <button class="pin-set-btn" data-player-id="${p.id}">${p.pin ? 'Change' : 'Set'} PIN</button>
+      </div>
+    </div>
+  `;
   const s = getPlayerStats(p.id);
   if(s.total === 0){
-    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${bonusHtml}</div>`;
+    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${bonusHtml}${pinHtml}</div>`;
   }
   const correctPct = (s.correct / s.total) * 100;
   const incorrectPct = (s.incorrect / s.total) * 100;
@@ -2212,6 +2313,7 @@ function renderPlayerStatsPanel(p){
       <div class="stats-accuracy">${s.accuracy}% accuracy on graded picks</div>
       <div class="stats-weekly-streak">${weeklyStreak > 0 ? `🔥 ${weeklyStreak}-week hit streak` : 'No active weekly streak'}</div>
       ${bonusHtml}
+      ${pinHtml}
     </div>
   `;
 }
@@ -2233,12 +2335,16 @@ function getBeatAiStats(playerId){
       if(aiCorrect > 0) return; // AI got at least one right this week — can't be beaten
       const playerCorrect = gradedGames.filter(g => {
         const pick = picks.find(p => p.gameId === g.id && p.playerId === playerId);
-        return pick && pick.pickedTeam === g.winner;
+        return pick && isPickVerified(pick) && pick.pickedTeam === g.winner;
       }).length;
       if(playerCorrect >= 1) weeksBeaten++;
     });
   });
   return { weeksBeaten, bonus: weeksBeaten * 1.5 };
+}
+
+function isPickVerified(pick){
+  return !pick || pick.verified !== false; // missing field = old pick from before this feature = still counts
 }
 
 function getCollegeScore(playerId){
@@ -2249,7 +2355,7 @@ function getCollegeScore(playerId){
     let weekCorrect = 0;
     gradedGames.forEach(game => {
       const pick = collegePicks.find(p => p.gameId === game.id && p.playerId === playerId);
-      if(pick && pick.pickedTeam === game.winner){ score++; weekCorrect++; }
+      if(pick && isPickVerified(pick) && pick.pickedTeam === game.winner){ score++; weekCorrect++; }
     });
     if(games.length === 6 && gradedGames.length === 6 && weekCorrect === 6){
       score += 2; // perfect week bonus
@@ -2267,7 +2373,7 @@ function getCollegePerfectWeeks(playerId){
     if(!allGraded) return;
     const allCorrect = games.every(game => {
       const pick = collegePicks.find(p => p.gameId === game.id && p.playerId === playerId);
-      return pick && pick.pickedTeam === game.winner;
+      return pick && isPickVerified(pick) && pick.pickedTeam === game.winner;
     });
     if(allCorrect) count++;
   });
@@ -2287,7 +2393,7 @@ function getNflPick6Score(playerId){
     let weekCorrect = 0;
     gradedGames.forEach(game => {
       const pick = nflPick6Picks.find(p => p.gameId === game.id && p.playerId === playerId);
-      if(pick && pick.pickedTeam === game.winner){ score++; weekCorrect++; }
+      if(pick && isPickVerified(pick) && pick.pickedTeam === game.winner){ score++; weekCorrect++; }
     });
     if(games.length === 6 && gradedGames.length === 6 && weekCorrect === 6){
       score += 2; // perfect week bonus
@@ -2305,7 +2411,7 @@ function getNflPick6PerfectWeeks(playerId){
     if(!allGraded) return;
     const allCorrect = games.every(game => {
       const pick = nflPick6Picks.find(p => p.gameId === game.id && p.playerId === playerId);
-      return pick && pick.pickedTeam === game.winner;
+      return pick && isPickVerified(pick) && pick.pickedTeam === game.winner;
     });
     if(allCorrect) count++;
   });
@@ -2328,11 +2434,33 @@ async function setNflPick6Winner(weekKey, gameId, winner){
 
 async function setNflPick6Pick(weekKey, gameId, playerId, pickedTeam){
   const existing = nflPick6Picks.find(p => p.gameId === gameId && p.playerId === playerId);
-  if(existing) return; // picks are locked in once made — no changing your mind
-  const pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
-  nflPick6Picks.push(pick);
+  if(existing && isPickVerified(existing)) return; // verified picks are locked in — no changing your mind
+  const player = players.find(pl => pl.id === playerId);
+  const autoVerified = !player || !player.pin;
+  if(existing){
+    existing.pickedTeam = pickedTeam;
+    existing.verified = autoVerified;
+  } else {
+    nflPick6Picks.push({ id: uid(), weekKey, gameId, playerId, pickedTeam, verified: autoVerified });
+  }
   await saveNflPick6Picks();
   renderNflPick6();
+}
+
+async function verifyPickWithPin(picksArr, saveFn, renderFn, gameId, playerId){
+  const player = players.find(p => p.id === playerId);
+  if(!player) return;
+  const pick = picksArr.find(p => p.gameId === gameId && p.playerId === playerId);
+  if(!pick || isPickVerified(pick)) return;
+  const entered = await pinEntryModal(player);
+  if(entered === null) return;
+  if(entered !== player.pin){
+    await confirmModal('Wrong PIN', 'That PIN doesn\'t match \u2014 try again.', 'OK');
+    return;
+  }
+  pick.verified = true;
+  await saveFn();
+  renderFn();
 }
 
 function getPredictionRecord(playerId){
@@ -2355,9 +2483,15 @@ async function setCollegeWinner(weekKey, gameId, winner){
 
 async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
   const existing = collegePicks.find(p => p.gameId === gameId && p.playerId === playerId);
-  if(existing) return; // picks are locked in once made — no changing your mind
-  const pick = { id: uid(), weekKey, gameId, playerId, pickedTeam };
-  collegePicks.push(pick);
+  if(existing && isPickVerified(existing)) return; // verified picks are locked in — no changing your mind
+  const player = players.find(pl => pl.id === playerId);
+  const autoVerified = !player || !player.pin;
+  if(existing){
+    existing.pickedTeam = pickedTeam;
+    existing.verified = autoVerified;
+  } else {
+    collegePicks.push({ id: uid(), weekKey, gameId, playerId, pickedTeam, verified: autoVerified });
+  }
   await saveCollegePicks();
   renderCollegePick6();
 }
@@ -2454,15 +2588,17 @@ function renderCollegePick6(){
           ${humanPlayers.length === 0 ? '<div class="stats-empty">Add players to start picking.</div>' : humanPlayers.map(p => {
             const pick = collegePicks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
             const picked = pick ? pick.pickedTeam : null;
-            const correct = winnerSet && picked && picked === game.winner;
-            const wrong = winnerSet && picked && picked !== game.winner;
+            const verified = pick ? isPickVerified(pick) : false;
+            const correct = winnerSet && picked && verified && picked === game.winner;
+            const wrong = winnerSet && picked && verified && picked !== game.winner;
             const pc = getPlayerColor(p.id);
             return `
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.name)}</span>${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}
                 <div class="college-pick-btns">
-                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
+                  ${picked && !verified ? `<button class="pick-verify-btn" data-collection="college" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : ''}
                 </div>
               </div>
             `;
@@ -2488,6 +2624,11 @@ function renderCollegePick6(){
   wrap.querySelectorAll('.college-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       setCollegePick(slate.weekKey, btn.dataset.gameId, btn.dataset.playerId, btn.dataset.team);
+    });
+  });
+  wrap.querySelectorAll('.pick-verify-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      verifyPickWithPin(collegePicks, saveCollegePicks, renderCollegePick6, btn.dataset.gameId, btn.dataset.playerId);
     });
   });
 }
@@ -2541,15 +2682,17 @@ function renderNflPick6(){
           ${humanPlayers.length === 0 ? '<div class="stats-empty">Add players to start picking.</div>' : humanPlayers.map(p => {
             const pick = nflPick6Picks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
             const picked = pick ? pick.pickedTeam : null;
-            const correct = winnerSet && picked && picked === game.winner;
-            const wrong = winnerSet && picked && picked !== game.winner;
+            const verified = pick ? isPickVerified(pick) : false;
+            const correct = winnerSet && picked && verified && picked === game.winner;
+            const wrong = winnerSet && picked && verified && picked !== game.winner;
             const pc = getPlayerColor(p.id);
             return `
               <div class="college-pick-row">
                 <span class="college-pick-name">${escapeHtml(p.name)}</span>${correct ? ` <img src="${ICON_CHECK}" width="13" height="13" style="vertical-align:-2px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="13" height="13" style="vertical-align:-2px;">` : ''}
                 <div class="college-pick-btns">
-                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
-                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || picked) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
+                  <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
+                  ${picked && !verified ? `<button class="pick-verify-btn" data-collection="nfl" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : ''}
                 </div>
               </div>
             `;
@@ -2577,6 +2720,11 @@ function renderNflPick6(){
       setNflPick6Pick(slate.weekKey, btn.dataset.gameId, btn.dataset.playerId, btn.dataset.team);
     });
   });
+  wrap.querySelectorAll('.pick-verify-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      verifyPickWithPin(nflPick6Picks, saveNflPick6Picks, renderNflPick6, btn.dataset.gameId, btn.dataset.playerId);
+    });
+  });
 }
 
 function getPick6WeekTally(slate, picksArr, playerId){
@@ -2585,7 +2733,7 @@ function getPick6WeekTally(slate, picksArr, playerId){
     if(!game.winner || game.winner === 'pending') return;
     graded++;
     const pick = picksArr.find(p => p.gameId === game.id && p.playerId === playerId);
-    if(pick && pick.pickedTeam === game.winner) correct++;
+    if(pick && isPickVerified(pick) && pick.pickedTeam === game.winner) correct++;
   });
   return { correct, graded };
 }
@@ -2609,13 +2757,14 @@ function renderPick6History(containerId, slates, picksArr, currentWeekKey, expan
     const isOpen = expandedWeekGetter() === slate.weekKey;
     const gamesHtml = (slate.games || []).map(game => {
       const winnerSet = game.winner && game.winner !== 'pending';
-      const resultText = winnerSet ? `${escapeHtml(game.winner)} won${game.live ? ` \u00b7 ${game.live.scoreA}\u2013${game.live.scoreB}` : ''}` : 'Not yet decided';
+      const resultText = winnerSet ? `${escapeHtml(game.winner)} won${game.live && game.live.completed ? ` \u00b7 ${game.live.scoreA}\u2013${game.live.scoreB}` : ''}` : 'Not yet decided';
       const picksHtml = humanPlayers.map(p => {
         const pick = collegePicks.concat(nflPick6Picks).find(pk => pk.gameId === game.id && pk.playerId === p.id);
         if(!pick) return '';
-        const correct = winnerSet && pick.pickedTeam === game.winner;
-        const wrong = winnerSet && pick.pickedTeam !== game.winner;
-        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.name)}</span><span class="history-pick-value" style="color:${getPlayerColor(p.id).c};">${escapeHtml(pick.pickedTeam)}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
+        const verified = isPickVerified(pick);
+        const correct = winnerSet && verified && pick.pickedTeam === game.winner;
+        const wrong = winnerSet && verified && pick.pickedTeam !== game.winner;
+        return `<div class="history-pick-row"><span class="history-pick-name">${escapeHtml(p.name)}</span><span class="history-pick-value" style="color:${getPlayerColor(p.id).c};">${escapeHtml(pick.pickedTeam)}${!verified ? ' <span class="history-unverified">(unverified \u2014 didn\'t count)</span>' : ''}${correct ? ` <img src="${ICON_CHECK}" width="11" height="11" style="vertical-align:-1px;">` : ''}${wrong ? ` <img src="${ICON_X}" width="11" height="11" style="vertical-align:-1px;">` : ''}</span></div>`;
       }).join('');
       return `
         <div class="history-game-card">
@@ -2948,6 +3097,25 @@ function renderPlayers(){
       const player = players.find(x => x.id === id);
       if(!player || !input) return;
       player.bonusPoints = Number(input.value) || 0;
+      await savePlayers();
+      renderPlayers();
+    });
+  });
+
+  list.querySelectorAll('.pin-set-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.playerId;
+      const player = players.find(x => x.id === id);
+      if(!player) return;
+      const entered = await setPlayerPinModal(player);
+      if(entered === null) return;
+      const trimmed = entered.trim();
+      if(!trimmed){
+        await confirmModal('No PIN entered', 'Enter at least one character to set a PIN.', 'OK');
+        return;
+      }
+      player.pin = trimmed;
       await savePlayers();
       renderPlayers();
     });
