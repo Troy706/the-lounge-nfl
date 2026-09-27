@@ -638,6 +638,7 @@
     flex-shrink:0;
   }
   .pick-verify-btn:hover{ background: rgba(255,184,28,0.28); }
+  .pick-unverified-hint{ font-size:9px; color: var(--grey); font-style:italic; flex-shrink:0; }
   .stats-empty{ font-size:12px; color: var(--grey); }
 
   .add-player-btn{
@@ -1920,7 +1921,7 @@ function setPlayerPinModal(player){
   return new Promise((resolve) => {
     $('modalBox').innerHTML = `
       <div class="modal-title">${player.pin ? 'Change' : 'Set'} PIN for ${escapeHtml(player.nickname || player.name)}</div>
-      <div class="modal-message">Once you set a PIN, your Pick 6 picks won't count until you confirm them with it \u2014 that's what stops someone else picking for you. Keep it simple, this just needs to stop a prank, not a hacker.</div>
+      <div class="modal-message">Pick 6 picks don't count until they're confirmed with your PIN \u2014 and without a PIN set, there's nothing to confirm against, so your picks just sit there unverified. Keep it simple, this just needs to stop a prank, not a hacker.</div>
       <div class="modal-field">
         <label>New PIN</label>
         <input type="password" inputmode="numeric" id="pinSetInput" placeholder="e.g. 4 digits" autocomplete="off">
@@ -2285,7 +2286,7 @@ function renderPlayerStatsPanel(p){
     <div class="pin-row">
       <label>Pick verification PIN</label>
       <div class="pin-row-controls">
-        <span class="pin-status">${p.pin ? '\uD83D\uDD10 PIN set' : 'No PIN set \u2014 picks aren\'t protected'}</span>
+        <span class="pin-status">${p.pin ? '\uD83D\uDD10 PIN set' : 'No PIN set \u2014 picks won\'t count until you set one'}</span>
         <button class="pin-set-btn" data-player-id="${p.id}">${p.pin ? 'Change' : 'Set'} PIN</button>
       </div>
     </div>
@@ -2435,13 +2436,11 @@ async function setNflPick6Winner(weekKey, gameId, winner){
 async function setNflPick6Pick(weekKey, gameId, playerId, pickedTeam){
   const existing = nflPick6Picks.find(p => p.gameId === gameId && p.playerId === playerId);
   if(existing && isPickVerified(existing)) return; // verified picks are locked in — no changing your mind
-  const player = players.find(pl => pl.id === playerId);
-  const autoVerified = !player || !player.pin;
   if(existing){
     existing.pickedTeam = pickedTeam;
-    existing.verified = autoVerified;
+    existing.verified = false;
   } else {
-    nflPick6Picks.push({ id: uid(), weekKey, gameId, playerId, pickedTeam, verified: autoVerified });
+    nflPick6Picks.push({ id: uid(), weekKey, gameId, playerId, pickedTeam, verified: false });
   }
   await saveNflPick6Picks();
   renderNflPick6();
@@ -2452,6 +2451,10 @@ async function verifyPickWithPin(picksArr, saveFn, renderFn, gameId, playerId){
   if(!player) return;
   const pick = picksArr.find(p => p.gameId === gameId && p.playerId === playerId);
   if(!pick || isPickVerified(pick)) return;
+  if(!player.pin){
+    await confirmModal('No PIN set', `${escapeHtml(player.nickname || player.name)} needs to set a PIN first (in their stats panel) before this pick can count.`, 'OK');
+    return;
+  }
   const entered = await pinEntryModal(player);
   if(entered === null) return;
   if(entered !== player.pin){
@@ -2484,13 +2487,11 @@ async function setCollegeWinner(weekKey, gameId, winner){
 async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
   const existing = collegePicks.find(p => p.gameId === gameId && p.playerId === playerId);
   if(existing && isPickVerified(existing)) return; // verified picks are locked in — no changing your mind
-  const player = players.find(pl => pl.id === playerId);
-  const autoVerified = !player || !player.pin;
   if(existing){
     existing.pickedTeam = pickedTeam;
-    existing.verified = autoVerified;
+    existing.verified = false;
   } else {
-    collegePicks.push({ id: uid(), weekKey, gameId, playerId, pickedTeam, verified: autoVerified });
+    collegePicks.push({ id: uid(), weekKey, gameId, playerId, pickedTeam, verified: false });
   }
   await saveCollegePicks();
   renderCollegePick6();
@@ -2598,7 +2599,7 @@ function renderCollegePick6(){
                 <div class="college-pick-btns">
                   <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
                   <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
-                  ${picked && !verified ? `<button class="pick-verify-btn" data-collection="college" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : ''}
+                  ${picked && !verified ? (p.pin ? `<button class="pick-verify-btn" data-collection="college" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : `<span class="pick-unverified-hint">\u26A0\uFE0F Set a PIN to count</span>`) : ''}
                 </div>
               </div>
             `;
@@ -2692,7 +2693,7 @@ function renderNflPick6(){
                 <div class="college-pick-btns">
                   <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
                   <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
-                  ${picked && !verified ? `<button class="pick-verify-btn" data-collection="nfl" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : ''}
+                  ${picked && !verified ? (p.pin ? `<button class="pick-verify-btn" data-collection="nfl" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : `<span class="pick-unverified-hint">\u26A0\uFE0F Set a PIN to count</span>`) : ''}
                 </div>
               </div>
             `;
