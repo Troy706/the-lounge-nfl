@@ -2500,6 +2500,16 @@ async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
 function pick6LiveLineHtml(game){
   const winnerSet = game.winner && game.winner !== 'pending';
   const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
+  const kickoffInFuture = game.kickoffISO && new Date(game.kickoffISO).getTime() > Date.now();
+  // If we know for a fact kickoff hasn't happened yet, don't trust any "in
+  // progress" status or score the live checker attached to this game — that can
+  // only be a bad match on the free data feed's end (community-sourced data,
+  // wrong event, stale record, etc.), not a real update, since the game
+  // objectively can't have started. A manually-confirmed winner is still trusted,
+  // since that's a human telling us the truth, not a scraped feed guessing.
+  if(kickoffInFuture && !winnerSet){
+    return '';
+  }
   if(!game.live || (game.live.status === 'scheduled' && !winnerSet)){
     // No live score data to show, but if kickoff has passed we still owe people
     // an explanation for why the picks are locked.
@@ -2572,7 +2582,8 @@ function renderCollegePick6(){
   const gamesHtml = slate.games.map(game => {
     const winnerSet = game.winner && game.winner !== 'pending';
     const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
-    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress');
+    const kickoffInFuture = game.kickoffISO && new Date(game.kickoffISO).getTime() > Date.now();
+    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress' && !kickoffInFuture);
     return `
       <div class="college-game-card">
         <div class="college-game-header">
@@ -2666,7 +2677,8 @@ function renderNflPick6(){
   const gamesHtml = slate.games.map(game => {
     const winnerSet = game.winner && game.winner !== 'pending';
     const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
-    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress');
+    const kickoffInFuture = game.kickoffISO && new Date(game.kickoffISO).getTime() > Date.now();
+    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress' && !kickoffInFuture);
     return `
       <div class="college-game-card">
         <div class="college-game-header nfl6-header">
@@ -2921,6 +2933,10 @@ function formatCountdown(targetISO){
   return `${minutes}m ${seconds}s`;
 }
 
+function isKickoffInFuture(kickoffISO){
+  return !!(kickoffISO && new Date(kickoffISO).getTime() > Date.now());
+}
+
 function liveStatusHtml(live){
   if(!live || live.status === 'scheduled') return '';
   const scoreText = `${live.scoreA}\u2013${live.scoreB}`;
@@ -2946,7 +2962,7 @@ function renderCountdowns(){
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
           <div class="countdown-label">${escapeHtml(nfl.matchup)}</div>
-          ${nfl.live && nfl.live.status !== 'scheduled' ? liveStatusHtml(nfl.live) : `<div class="countdown-time">${formatCountdown(nfl.kickoffISO)}</div>`}
+          ${nfl.live && nfl.live.status !== 'scheduled' && !isKickoffInFuture(nfl.kickoffISO) ? liveStatusHtml(nfl.live) : `<div class="countdown-time">${formatCountdown(nfl.kickoffISO)}</div>`}
           <div class="countdown-cta-row">
             <button class="countdown-cta countdown-cta-nfl" data-target="addFormSection">View all picks →</button>
             <button class="countdown-cta countdown-cta-nfl-outline" id="viewAllGamesBtn">View all games →</button>
@@ -2960,7 +2976,7 @@ function renderCountdowns(){
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
           <div class="countdown-label">${escapeHtml(college.matchup)}</div>
-          ${college.live && college.live.status !== 'scheduled' ? liveStatusHtml(college.live) : `<div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>`}
+          ${college.live && college.live.status !== 'scheduled' && !isKickoffInFuture(college.kickoffISO) ? liveStatusHtml(college.live) : `<div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>`}
           <button class="countdown-cta countdown-cta-college" data-target="collegeWrap">View College Pick 6 →</button>
         </div>
       </div>
@@ -3060,14 +3076,14 @@ function renderPlayers(){
       ? `style="background-image:url('${p.photo}')"`
       : '';
     const statsOpen = expandedPlayerId === p.id;
-    const perfectWeeks = p.isAI ? 0 : getCollegePerfectWeeks(p.id);
+    const perfectWeeks = p.isAI ? 0 : (getCollegePerfectWeeks(p.id) + getNflPick6PerfectWeeks(p.id));
     return `
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
         ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
           ${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="68" height="68" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}
           ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
-          ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect College Pick 6 week${perfectWeeks === 1 ? '' : 's'}"><img src="${ICON_TROPHY}" width="18" height="18"></span>` : ''}
+          ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect Pick 6 week${perfectWeeks === 1 ? '' : 's'}"><img src="${ICON_TROPHY}" width="18" height="18"></span>` : ''}
         </label>
         <div class="player-meta">
           <div class="player-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
