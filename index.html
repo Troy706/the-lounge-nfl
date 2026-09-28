@@ -2306,6 +2306,18 @@ function getLeaderboardRows(){
   return rows;
 }
 
+// The season champion is whoever is #1 on the rating leaderboard (same tiebreakers:
+// rating, then points, then graded picks). Nobody qualified = no champion yet.
+function getChampions(rows){
+  const top = rows[0];
+  if(!top || !top.qualified) return { top: null, winners: [] };
+  const winners = rows.filter(r => r.qualified
+    && Math.abs(r.rating - top.rating) < 1e-9
+    && r.points === top.points
+    && r.graded === top.graded);
+  return { top, winners };
+}
+
 function scoreFor(playerId){
   const player = players.find(p => p.id === playerId);
   const bonus = (player && Number(player.bonusPoints)) || 0;
@@ -3054,7 +3066,7 @@ function renderTicker(){
     ? `${r.player.name}: ${r.rating.toFixed(1)} RTG`
     : `${r.player.name}: ${r.graded}/${RATING_MIN_PICKS} PICKS`);
   const lead = season.finished
-    ? `\uD83C\uDFC6 SEASON CHAMPION: ${players.filter(p=>season.winnerIds.includes(p.id)).map(w=>(w.nickname||w.name).toUpperCase()).join(' & ')}`
+    ? `\uD83C\uDFC6 SEASON CHAMPION: ${players.filter(p=>season.winnerIds.includes(p.id)).map(w=>w.name.toUpperCase()).join(' & ')}`
     : (leader.qualified
         ? `LEADING THE PACK: ${(leader.player.name).toUpperCase()}`
         : `NO ONE RANKED YET \u2014 ${RATING_MIN_PICKS} GRADED PICKS TO QUALIFY`);
@@ -3540,7 +3552,7 @@ function renderTrophyBanner(){
   }
   const winners = players.filter(p => season.winnerIds.includes(p.id));
   if(winners.length === 0){ banner.style.display = 'none'; return; }
-  const score = scoreFor(winners[0].id);
+  const metaText = typeof season.winnerRating === 'number' ? `Final rating: ${season.winnerRating.toFixed(1)}` : `Final score: ${scoreFor(winners[0].id)} pts`;
   const names = winners.map(w => w.name).join(' & ');
   const dateStr = season.finishedAt ? new Date(season.finishedAt).toLocaleDateString(undefined, {month:'long', day:'numeric', year:'numeric'}) : '';
   banner.style.display = 'flex';
@@ -3557,7 +3569,7 @@ function renderTrophyBanner(){
     <div class="trophy-copy">
       <div class="trophy-eyebrow">${winners.length > 1 ? 'SEASON CO-CHAMPIONS' : 'SEASON CHAMPION'}</div>
       <div class="trophy-name">${escapeHtml(names)}</div>
-      <div class="trophy-meta">Final score: ${score} pts ${dateStr ? '&middot; Crowned ' + dateStr : ''}</div>
+      <div class="trophy-meta">${metaText} ${dateStr ? '&middot; Crowned ' + dateStr : ''}</div>
     </div>
     <button class="btn btn-ghost btn-small" id="reopenBtn">Reopen season</button>
   `;
@@ -3591,13 +3603,15 @@ function applyLockState(){
 
 $('finishBtn').addEventListener('click', async () => {
   if(players.length === 0){ await confirmModal('Can\'t finish yet', 'Add players and predictions before finishing the season.', 'OK'); return; }
-  const ranked = [...players].sort((a,b) => scoreFor(b.id) - scoreFor(a.id));
-  const topScore = scoreFor(ranked[0].id);
-  const winners = ranked.filter(p => scoreFor(p.id) === topScore);
-  const label = winners.map(w => w.name).join(' & ');
-  const ok = await confirmModal('Finish season', `Lock in final scores and crown ${label} (${topScore} pts) as champion${winners.length>1?'s':''}?`, 'Crown champion');
+  const { top, winners } = getChampions(getLeaderboardRows());
+  if(!top){
+    await confirmModal('No champion yet', `The champion is whoever finishes #1 on the rating leaderboard, and no one has ${RATING_MIN_PICKS} graded picks yet, so nobody is ranked.`, 'OK');
+    return;
+  }
+  const label = winners.map(r => r.player.name).join(' & ');
+  const ok = await confirmModal('Finish season', `Lock in the final standings and crown ${label} (${top.rating.toFixed(1)} rating) as champion${winners.length>1?'s':''}?`, 'Crown champion');
   if(!ok) return;
-  season = { finished:true, winnerIds: winners.map(w=>w.id), finishedAt: Date.now() };
+  season = { finished:true, winnerIds: winners.map(r => r.player.id), winnerRating: top.rating, finishedAt: Date.now() };
   await saveSeason();
   render();
   fireConfetti();
