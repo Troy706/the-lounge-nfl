@@ -486,6 +486,27 @@
     font-size:14px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
+  .player-sub{
+    color: var(--grey);
+    font-size:11px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .leaderboard-note{
+    font-size:10px;
+    color: var(--grey);
+    line-height:1.4;
+    margin:-4px 0 10px;
+  }
+  .rating-breakdown{ margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .rating-breakdown-title{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    color: var(--gold);
+    margin-bottom:5px;
+  }
+  .rating-line{ display:flex; justify-content:space-between; gap:8px; font-size:11px; color: var(--grey); padding:1px 0; }
+  .rating-line span:last-child{ color: var(--white); }
   .player-nick{
     color: var(--grey);
     font-size:12px;
@@ -1720,6 +1741,7 @@
       </svg>
       Leaderboard
     </div>
+    <div class="leaderboard-note">Ranked by rating: 80% pick accuracy, 10% points, 10% prediction record. Needs 5 graded picks to rank.</div>
     <div id="playerList"></div>
     <button class="add-player-btn" id="addPlayerBtn">+ Add player</button>
     <div id="pendingPlayersWrap"></div>
@@ -2246,6 +2268,44 @@ async function saveNflPick6Picks(){
   catch(e){ showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error'); }
 }
 
+const RATING_MIN_PICKS = 5;
+
+// Leaderboard rating (0-100), QBR-style: 80% pick accuracy, 10% points relative to
+// the top qualified scorer, 10% All Predictions win rate. A player needs at least
+// RATING_MIN_PICKS graded, verified Pick 6 picks to be ranked at all.
+function getRatingParts(playerId){
+  const s = getPlayerStats(playerId);
+  const graded = s.correct + s.incorrect;
+  const rec = getPredictionRecord(playerId);
+  const recGraded = rec.wins + rec.losses;
+  return {
+    graded,
+    qualified: graded >= RATING_MIN_PICKS,
+    accPct: graded > 0 ? (s.correct / graded) * 100 : 0,
+    points: scoreFor(playerId),
+    predPct: recGraded > 0 ? rec.winPct * 100 : null
+  };
+}
+
+function getLeaderboardRows(){
+  const rows = players.map(p => Object.assign({ player: p }, getRatingParts(p.id)));
+  const maxPoints = Math.max(0, ...rows.filter(r => r.qualified).map(r => r.points));
+  rows.forEach(r => {
+    r.ptsPct = maxPoints > 0 ? (Math.max(0, r.points) / maxPoints) * 100 : 0;
+    if(!r.qualified){ r.rating = null; return; }
+    // No graded predictions yet? Spread that 10% over the other two instead of scoring it as zero.
+    r.rating = r.predPct === null
+      ? (r.accPct * 0.8 + r.ptsPct * 0.1) / 0.9
+      : (r.accPct * 0.8 + r.ptsPct * 0.1 + r.predPct * 0.1);
+  });
+  rows.sort((a, b) => {
+    if(a.qualified !== b.qualified) return a.qualified ? -1 : 1;
+    if(a.qualified) return (b.rating - a.rating) || (b.points - a.points) || (b.graded - a.graded);
+    return (b.graded - a.graded) || (b.points - a.points);
+  });
+  return rows;
+}
+
 function scoreFor(playerId){
   const player = players.find(p => p.id === playerId);
   const bonus = (player && Number(player.bonusPoints)) || 0;
@@ -2358,7 +2418,21 @@ function renderPlayerStatsPanel(p){
       </div>
     </div>
   `;
-  const extraHtml = p.isAI ? bonusHtml : (profileHtml + bonusHtml + pinHtml + removeHtml);
+  const ratingRow = getLeaderboardRows().find(r => r.player.id === p.id);
+  const ratingHtml = !ratingRow ? '' : (ratingRow.qualified ? `
+    <div class="rating-breakdown">
+      <div class="rating-breakdown-title">Rating ${ratingRow.rating.toFixed(1)}</div>
+      <div class="rating-line"><span>Pick accuracy (80%)</span><span>${ratingRow.accPct.toFixed(0)}%</span></div>
+      <div class="rating-line"><span>Points vs. leader (10%)</span><span>${ratingRow.ptsPct.toFixed(0)}%</span></div>
+      <div class="rating-line"><span>Prediction record (10%)</span><span>${ratingRow.predPct === null ? 'none yet' : ratingRow.predPct.toFixed(0) + '%'}</span></div>
+    </div>
+  ` : `
+    <div class="rating-breakdown">
+      <div class="rating-breakdown-title">Not ranked yet</div>
+      <div class="rating-line"><span>Graded picks needed to rank</span><span>${ratingRow.graded} / ${RATING_MIN_PICKS}</span></div>
+    </div>
+  `);
+  const extraHtml = ratingHtml + (p.isAI ? bonusHtml : (profileHtml + bonusHtml + pinHtml + removeHtml));
   const s = getPlayerStats(p.id);
   if(s.total === 0){
     return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${extraHtml}</div>`;
@@ -2974,12 +3048,16 @@ function renderTicker(){
     $('tickerTrack').textContent = `WELCOME TO THE LOUNGE${sep}ADD YOUR GROUP TO GET STARTED${sep}2026 NFL SEASON${sep}`;
     return;
   }
-  const ranked = [...players].sort((a,b)=>scoreFor(b.id)-scoreFor(a.id));
+  const ranked = getLeaderboardRows();
   const leader = ranked[0];
-  const parts = ranked.map(p => `${p.name}: ${scoreFor(p.id)} PTS`);
+  const parts = ranked.map(r => r.qualified
+    ? `${r.player.name}: ${r.rating.toFixed(1)} RTG`
+    : `${r.player.name}: ${r.graded}/${RATING_MIN_PICKS} PICKS`);
   const lead = season.finished
     ? `\uD83C\uDFC6 SEASON CHAMPION: ${players.filter(p=>season.winnerIds.includes(p.id)).map(w=>(w.nickname||w.name).toUpperCase()).join(' & ')}`
-    : `LEADING THE PACK: ${(leader.name).toUpperCase()}`;
+    : (leader.qualified
+        ? `LEADING THE PACK: ${(leader.player.name).toUpperCase()}`
+        : `NO ONE RANKED YET \u2014 ${RATING_MIN_PICKS} GRADED PICKS TO QUALIFY`);
   $('tickerTrack').textContent =
     `THE LOUNGE${sep}${lead}${sep}` +
     parts.join(sep) + sep;
@@ -3128,15 +3206,16 @@ function renderPendingPlayers(){
 }
 
 function renderPlayers(){
-  const ranked = [...players].sort((a,b)=>scoreFor(b.id)-scoreFor(a.id));
+  const ranked = getLeaderboardRows();
   const list = $('playerList');
   if(ranked.length === 0){
     list.innerHTML = `<div style="color:var(--grey); font-size:13px; padding:8px 4px;">No players yet. Add everyone in the group to start tracking picks.</div>`;
     return;
   }
-  list.innerHTML = ranked.map((p, idx) => {
-    const score = scoreFor(p.id);
-    const rankClass = idx === 0 && score > 0 ? 'rank-1' : '';
+  list.innerHTML = ranked.map((row, idx) => {
+    const p = row.player;
+    const score = row.points;
+    const rankClass = idx === 0 && row.qualified ? 'rank-1' : '';
     const activeClass = activePlayerFilter === p.id ? 'active' : '';
     const aiClass = p.isAI ? 'avatar-ai' : '';
     const avatarContent = p.photo
@@ -3146,7 +3225,7 @@ function renderPlayers(){
     const perfectWeeks = p.isAI ? 0 : (getCollegePerfectWeeks(p.id) + getNflPick6PerfectWeeks(p.id));
     return `
       <div class="player-card ${rankClass} ${activeClass}" data-id="${p.id}">
-        ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
+        ${row.qualified ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
           ${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="68" height="68" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}
           ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}"><span class="avatar-camera" title="Change photo">\uD83D\uDCF7</span>`}
@@ -3155,8 +3234,9 @@ function renderPlayers(){
         <div class="player-meta">
           <div class="player-name">${escapeHtml(p.name)}${streakBadgeHtml(p.id)}</div>
           <div class="player-nick">${p.nickname ? '"'+escapeHtml(p.nickname)+'"' : ''}</div>
+          <div class="player-sub">${row.graded > 0 ? Math.round(row.accPct) + '% acc' : 'no graded picks'} \u00b7 ${score} pts</div>
         </div>
-        <div class="player-score">${score}<small>PTS</small></div>
+        <div class="player-score">${row.qualified ? row.rating.toFixed(1) : '\u2014'}<small>${row.qualified ? 'RTG' : row.graded + '/' + RATING_MIN_PICKS}</small></div>
         <button class="stats-toggle-btn ${statsOpen ? 'open' : ''}" data-stats-for="${p.id}" title="View stats">📊</button>
       </div>
       ${statsOpen ? renderPlayerStatsPanel(p) : ''}
