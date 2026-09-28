@@ -455,6 +455,19 @@
     position:relative;
   }
   .avatar input{ display:none; }
+  .avatar-camera{
+    position:absolute;
+    bottom:-4px; left:-4px;
+    width:24px; height:24px;
+    border-radius:50%;
+    background: var(--panel-raised);
+    border:1.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px;
+    cursor:pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  }
+  .avatar:hover .avatar-camera{ background: var(--gold); }
   .avatar-trophy{
     position:absolute;
     bottom:-4px; right:-4px;
@@ -596,6 +609,33 @@
   .bonus-adjust-save:hover{ border-color: var(--gold); color: var(--gold); }
   .bonus-adjust-locked{ text-transform:none; letter-spacing:normal; font-size:10px; }
   .bonus-adjust-readonly{ font-family: var(--font-display); font-weight:600; font-size:13px; color: var(--white); }
+  .nickname-row{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+  .nickname-row > label:first-child{
+    display:block;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--grey);
+    margin-bottom:5px;
+  }
+  .nickname-controls{ display:flex; gap:6px; margin-bottom:8px; }
+  .nickname-input{ flex:1; min-width:0; font-size:12px; }
+  .nickname-save-btn, .change-photo-btn{
+    background: var(--panel);
+    border:1px solid var(--line);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:6px 12px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .nickname-save-btn:hover, .change-photo-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .change-photo-btn{ display:inline-block; }
+  .change-photo-btn input{ display:none; }
   .pin-row{
     margin-top:10px;
     padding-top:10px;
@@ -2282,6 +2322,16 @@ function renderPlayerStatsPanel(p){
       <div class="bonus-adjust-readonly">${currentBonus > 0 ? '+' : ''}${currentBonus}</div>
     </div>
   `;
+  const profileHtml = `
+    <div class="nickname-row">
+      <label>Nickname</label>
+      <div class="nickname-controls">
+        <input type="text" class="nickname-input" maxlength="20" placeholder="Pick your own" value="${escapeAttr(p.nickname || '')}" data-player-id="${p.id}">
+        <button class="nickname-save-btn" data-player-id="${p.id}">Save</button>
+      </div>
+      <label class="change-photo-btn">\uD83D\uDCF7 Change photo<input type="file" accept="image/*" data-photo-for="${p.id}"></label>
+    </div>
+  `;
   const pinHtml = `
     <div class="pin-row">
       <label>Pick verification PIN</label>
@@ -2293,7 +2343,7 @@ function renderPlayerStatsPanel(p){
   `;
   const s = getPlayerStats(p.id);
   if(s.total === 0){
-    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${bonusHtml}${pinHtml}</div>`;
+    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${profileHtml}${bonusHtml}${pinHtml}</div>`;
   }
   const correctPct = (s.correct / s.total) * 100;
   const incorrectPct = (s.incorrect / s.total) * 100;
@@ -2313,6 +2363,7 @@ function renderPlayerStatsPanel(p){
       </div>
       <div class="stats-accuracy">${s.accuracy}% accuracy on graded picks</div>
       <div class="stats-weekly-streak">${weeklyStreak > 0 ? `🔥 ${weeklyStreak}-week hit streak` : 'No active weekly streak'}</div>
+      ${profileHtml}
       ${bonusHtml}
       ${pinHtml}
     </div>
@@ -3082,7 +3133,7 @@ function renderPlayers(){
         ${score > 0 ? `<div class="rank-badge">${idx+1}</div>` : ''}
         <label class="avatar ${aiClass}" ${avatarContent} title="${p.isAI ? 'AI player' : 'Click to change photo'}">
           ${p.photo ? '' : (p.isAI ? '<img src="'+ICON_AI_AVATAR+'" width="68" height="68" style="border-radius:50%; object-fit:cover;">' : initials(p.name))}
-          ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}">`}
+          ${p.isAI ? '' : `<input type="file" accept="image/*" data-photo-for="${p.id}"><span class="avatar-camera" title="Change photo">\uD83D\uDCF7</span>`}
           ${perfectWeeks > 0 ? `<span class="avatar-trophy" title="${perfectWeeks} perfect Pick 6 week${perfectWeeks === 1 ? '' : 's'}"><img src="${ICON_TROPHY}" width="18" height="18"></span>` : ''}
         </label>
         <div class="player-meta">
@@ -3116,6 +3167,19 @@ function renderPlayers(){
       player.bonusPoints = Number(input.value) || 0;
       await savePlayers();
       renderPlayers();
+    });
+  });
+
+  list.querySelectorAll('.nickname-save-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.playerId;
+      const input = list.querySelector(`.nickname-input[data-player-id="${id}"]`);
+      const player = players.find(x => x.id === id);
+      if(!player || !input) return;
+      player.nickname = input.value.trim();
+      await savePlayers();
+      render();
     });
   });
 
