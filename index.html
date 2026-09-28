@@ -609,6 +609,18 @@
   .bonus-adjust-save:hover{ border-color: var(--gold); color: var(--gold); }
   .bonus-adjust-locked{ text-transform:none; letter-spacing:normal; font-size:10px; }
   .bonus-adjust-readonly{ font-family: var(--font-display); font-weight:600; font-size:13px; color: var(--white); }
+  .remove-row{ margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
+  .player-remove-btn{
+    width:100%;
+    background: transparent;
+    border:1px solid var(--line);
+    color: var(--grey);
+    font-size:11px;
+    padding:7px 10px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .player-remove-btn:hover{ border-color: var(--red); color: var(--red); }
   .nickname-row{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
   .nickname-row > label:first-child{
     display:block;
@@ -2332,6 +2344,11 @@ function renderPlayerStatsPanel(p){
       <label class="change-photo-btn">\uD83D\uDCF7 Change photo<input type="file" accept="image/*" data-photo-for="${p.id}"></label>
     </div>
   `;
+  const removeHtml = season.finished ? '' : `
+    <div class="remove-row">
+      <button class="player-remove-btn" data-remove-player="${p.id}">Remove ${escapeHtml(p.name)} from the group</button>
+    </div>
+  `;
   const pinHtml = `
     <div class="pin-row">
       <label>Pick verification PIN</label>
@@ -2341,9 +2358,10 @@ function renderPlayerStatsPanel(p){
       </div>
     </div>
   `;
+  const extraHtml = p.isAI ? bonusHtml : (profileHtml + bonusHtml + pinHtml + removeHtml);
   const s = getPlayerStats(p.id);
   if(s.total === 0){
-    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${profileHtml}${bonusHtml}${pinHtml}</div>`;
+    return `<div class="player-stats-panel"><div class="stats-empty">No predictions logged for ${escapeHtml(p.name)} yet.</div>${extraHtml}</div>`;
   }
   const correctPct = (s.correct / s.total) * 100;
   const incorrectPct = (s.incorrect / s.total) * 100;
@@ -2363,9 +2381,7 @@ function renderPlayerStatsPanel(p){
       </div>
       <div class="stats-accuracy">${s.accuracy}% accuracy on graded picks</div>
       <div class="stats-weekly-streak">${weeklyStreak > 0 ? `🔥 ${weeklyStreak}-week hit streak` : 'No active weekly streak'}</div>
-      ${profileHtml}
-      ${bonusHtml}
-      ${pinHtml}
+      ${extraHtml}
     </div>
   `;
 }
@@ -3142,7 +3158,6 @@ function renderPlayers(){
         </div>
         <div class="player-score">${score}<small>PTS</small></div>
         <button class="stats-toggle-btn ${statsOpen ? 'open' : ''}" data-stats-for="${p.id}" title="View stats">📊</button>
-        <button class="player-remove" data-remove-player="${p.id}" title="Remove player">✕</button>
       </div>
       ${statsOpen ? renderPlayerStatsPanel(p) : ''}
     `;
