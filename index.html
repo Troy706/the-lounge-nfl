@@ -1443,6 +1443,10 @@
     padding:4px 6px;
     max-width:150px;
   }
+  .college-winner-select:disabled, .nfl6-winner-select:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
   .college-matchup{
     font-family: var(--font-display);
     font-weight:600;
@@ -2741,7 +2745,7 @@ function renderCollegePick6(){
       <div class="college-game-card">
         <div class="college-game-header">
           <span class="college-conf-tag">${escapeHtml(game.conference)}</span>
-          <select class="college-winner-select" data-game-id="${game.id}">
+          <select class="college-winner-select" data-game-id="${game.id}" ${isAdmin ? '' : 'disabled title="Admin only \u2014 this is not where you make your pick"'}>
             <option value="pending" ${!winnerSet ? 'selected' : ''}>Winner: Pending</option>
             <option value="${escapeAttr(game.teamA)}" ${game.winner === game.teamA ? 'selected' : ''}>${escapeHtml(game.teamA)} won</option>
             <option value="${escapeAttr(game.teamB)}" ${game.winner === game.teamB ? 'selected' : ''}>${escapeHtml(game.teamB)} won</option>
@@ -2782,6 +2786,7 @@ function renderCollegePick6(){
 
   wrap.querySelectorAll('.college-winner-select').forEach(sel => {
     sel.addEventListener('change', async (e) => {
+      if(!isAdmin){ renderCollegePick6(); return; } // admin-only, even if a stale control somehow fires
       await setCollegeWinner(slate.weekKey, sel.dataset.gameId, e.target.value);
       renderCollegePick6();
     });
@@ -2836,7 +2841,7 @@ function renderNflPick6(){
       <div class="college-game-card">
         <div class="college-game-header nfl6-header">
           <span class="college-winner-select-spacer"></span>
-          <select class="nfl6-winner-select" data-game-id="${game.id}">
+          <select class="nfl6-winner-select" data-game-id="${game.id}" ${isAdmin ? '' : 'disabled title="Admin only \u2014 this is not where you make your pick"'}>
             <option value="pending" ${!winnerSet ? 'selected' : ''}>Winner: Pending</option>
             <option value="${escapeAttr(game.teamA)}" ${game.winner === game.teamA ? 'selected' : ''}>${escapeHtml(game.teamA)} won</option>
             <option value="${escapeAttr(game.teamB)}" ${game.winner === game.teamB ? 'selected' : ''}>${escapeHtml(game.teamB)} won</option>
@@ -2877,6 +2882,7 @@ function renderNflPick6(){
 
   wrap.querySelectorAll('.nfl6-winner-select').forEach(sel => {
     sel.addEventListener('change', async (e) => {
+      if(!isAdmin){ renderNflPick6(); return; } // admin-only, even if a stale control somehow fires
       await setNflPick6Winner(slate.weekKey, sel.dataset.gameId, e.target.value);
       renderNflPick6();
     });
