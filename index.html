@@ -1995,6 +1995,30 @@ function pinEntryModal(player){
   });
 }
 
+function currentPinEntryModal(player){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">Enter current PIN</div>
+      <div class="modal-message">To change ${escapeHtml(player.nickname || player.name)}'s PIN, enter the current one first.</div>
+      <div class="modal-field">
+        <label>Current PIN</label>
+        <input type="password" inputmode="numeric" id="pinOldInput" placeholder="Current PIN" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalConfirm">Continue</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    const input = $('pinOldInput');
+    input.focus();
+    const submit = () => { closeModal(); resolve(input.value); };
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(null); });
+    $('modalConfirm').addEventListener('click', submit);
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
+  });
+}
+
 function setPlayerPinModal(player){
   return new Promise((resolve) => {
     $('modalBox').innerHTML = `
@@ -3302,6 +3326,16 @@ function renderPlayers(){
       const id = btn.dataset.playerId;
       const player = players.find(x => x.id === id);
       if(!player) return;
+      // Changing an existing PIN requires the current one — admins can still
+      // reset a forgotten PIN without it, since that's the whole point of admin.
+      if(player.pin && !isAdmin){
+        const oldEntered = await currentPinEntryModal(player);
+        if(oldEntered === null) return;
+        if(oldEntered !== player.pin){
+          await confirmModal('Wrong PIN', 'That PIN doesn\'t match \u2014 try again.', 'OK');
+          return;
+        }
+      }
       const entered = await setPlayerPinModal(player);
       if(entered === null) return;
       const trimmed = entered.trim();
