@@ -55,6 +55,7 @@
   .countdown-item{
     position:relative;
     display:flex;
+    flex-wrap:wrap;
     align-items:center;
     gap:14px;
     padding:18px 20px;
@@ -86,6 +87,34 @@
     border-color: rgba(31,191,117,0.4);
   }
   .countdown-body{ flex:1; min-width:0; }
+  .matchup-art{
+    flex:0 0 100%;
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    height:64px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(180deg, rgba(8,12,10,0.5), rgba(8,12,10,0.82)), var(--stadium-bg) center / cover;
+  }
+  .matchup-badge{
+    width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.6);
+    border:2px solid rgba(255,255,255,0.35);
+    font-family: var(--font-display); font-weight:700; font-size:13px; letter-spacing:0.03em;
+    color: var(--white);
+  }
+  .matchup-vs{ font-family: var(--font-display); font-weight:600; font-size:12px; color: rgba(255,255,255,0.7); text-transform:uppercase; }
+  .marquee-info{
+    flex:0 0 100%;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    display:flex; flex-direction:column; gap:3px;
+  }
+  .marquee-fact{ display:flex; gap:8px; font-size:11px; line-height:1.35; }
+  .marquee-fact-label{ flex:0 0 62px; color: var(--grey); text-transform:uppercase; letter-spacing:0.06em; font-size:9px; padding-top:2px; }
+  .marquee-fact-value{ color: var(--white); min-width:0; }
+  .marquee-note{ font-size:11px; color: var(--grey); line-height:1.4; margin-top:3px; }
+  .marquee-info-source{ font-size:9px; color: var(--grey); font-style:italic; opacity:0.75; margin-top:4px; }
   .countdown-eyebrow{
     font-family: var(--font-display);
     font-weight:600;
@@ -3161,6 +3190,25 @@ function liveStatusHtml(live){
   return `<div class="live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span> <span class="live-score">${scoreText}</span>${live.statusDetail ? ` <span class="live-detail">${escapeHtml(live.statusDetail)}</span>` : ''}</div>`;
 }
 
+function marqueeArtHtml(item){
+  const info = item && item.info;
+  if(!info || !info.abbrA || !info.abbrB) return '';
+  const connector = /\s@\s/.test(item.matchup || '') ? '@' : 'vs';
+  return `<div class="matchup-art"><div class="matchup-badge">${escapeHtml(info.abbrA)}</div><div class="matchup-vs">${connector}</div><div class="matchup-badge">${escapeHtml(info.abbrB)}</div></div>`;
+}
+
+function marqueeInfoHtml(item){
+  const info = item && item.info;
+  if(!info) return '';
+  const facts = [['Records', info.records], ['Rankings', info.ranks], ['TV', info.tv], ['Venue', info.venue]].filter(f => f[1]);
+  if(!facts.length && !info.note) return '';
+  return `<div class="marquee-info">
+    ${facts.map(f => `<div class="marquee-fact"><span class="marquee-fact-label">${f[0]}</span><span class="marquee-fact-value">${escapeHtml(f[1])}</span></div>`).join('')}
+    ${info.note ? `<div class="marquee-note">${escapeHtml(info.note)}</div>` : ''}
+    <div class="marquee-info-source">Facts only, compiled by AI from web sources when this game was set \u2014 double-check anything that matters.</div>
+  </div>`;
+}
+
 function renderCountdowns(){
   const strip = $('countdownStrip');
   if(!strip) return;
@@ -3173,6 +3221,7 @@ function renderCountdowns(){
   strip.innerHTML = `
     ${nfl ? `
       <div class="countdown-item">
+        ${marqueeArtHtml(nfl)}
         <div class="countdown-icon-badge"><img src="${ICON_FOOTBALL}" width="46" height="46" style="border-radius:6px; object-fit:cover;"></div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
@@ -3183,10 +3232,12 @@ function renderCountdowns(){
             <button class="countdown-cta countdown-cta-nfl-outline" id="viewAllGamesBtn">View all games →</button>
           </div>
         </div>
+        ${marqueeInfoHtml(nfl)}
       </div>
     ` : ''}
     ${college ? `
       <div class="countdown-item countdown-college">
+        ${marqueeArtHtml(college)}
         <div class="countdown-icon-badge countdown-icon-badge-college"><img src="${ICON_COLLEGE_BADGE}" width="46" height="46" style="border-radius:6px; object-fit:cover;"></div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
@@ -3194,6 +3245,7 @@ function renderCountdowns(){
           ${college.live && college.live.status !== 'scheduled' && !isKickoffInFuture(college.kickoffISO) ? liveStatusHtml(college.live) : `<div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>`}
           <button class="countdown-cta countdown-cta-college" data-target="collegeWrap">View College Pick 6 →</button>
         </div>
+        ${marqueeInfoHtml(college)}
       </div>
     ` : ''}
   `;
@@ -4022,6 +4074,7 @@ $('loungeLogoImg').src = LOUNGE_LOGO;
 $('proBannerImg').src = PRO_BANNER;
 $('collegeBannerImg').src = COLLEGE_BANNER;
 
+document.documentElement.style.setProperty('--stadium-bg', 'url("' + STADIUM_BG + '")');
 document.querySelector('header.masthead').style.backgroundImage =
   'linear-gradient(180deg, rgba(10,22,16,0.55) 0%, rgba(10,22,16,0.75) 55%, rgba(10,22,16,0.92) 100%), url("' + STADIUM_BG + '")';
 
