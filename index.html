@@ -104,6 +104,60 @@
     color: var(--white);
   }
   .matchup-vs{ font-family: var(--font-display); font-weight:600; font-size:12px; color: rgba(255,255,255,0.7); text-transform:uppercase; }
+  .marquee-layout{ flex:0 0 100%; display:grid; grid-template-columns:minmax(0,1fr); gap:14px; align-items:start; }
+  .marquee-layout.has-side{ grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); }
+  @media (max-width: 760px){ .marquee-layout.has-side{ grid-template-columns:minmax(0,1fr); } }
+  .marquee-top{ display:flex; align-items:center; gap:14px; }
+  .marquee-left .marquee-info{ margin-top:12px; }
+  .marquee-side{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .marquee-custom-image{
+    min-height:150px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.08);
+    background-color: rgba(0,0,0,0.35);
+    background-repeat:no-repeat;
+    background-position:center;
+    background-size:contain;
+  }
+  .marquee-custom-text{
+    font-size:12px; line-height:1.45; color: var(--white);
+    white-space:pre-wrap; overflow-wrap:anywhere;
+    padding:10px 12px; border-radius:8px;
+    background: rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08);
+  }
+  .marquee-custom-image.placeholder, .marquee-custom-text.placeholder{
+    display:flex; align-items:center; justify-content:center;
+    border:1.5px dashed rgba(255,255,255,0.25); background: rgba(0,0,0,0.2);
+    color: var(--grey); font-family: var(--font-display); font-size:11px; letter-spacing:0.12em;
+  }
+  .marquee-custom-text.placeholder{ min-height:56px; }
+  .matchup-badge.has-logo{
+    background-color:#f2f2f2; background-repeat:no-repeat; background-position:center;
+    background-size:contain; background-origin:content-box;
+    padding:5px; box-sizing:border-box; border-color: rgba(255,255,255,0.6);
+  }
+  .matchup-badge.placeholder{ border-style:dashed; color: var(--grey); }
+  .marquee-edit{
+    flex:0 0 100%; padding:12px; border-radius:8px;
+    border:1px dashed var(--gold); background: rgba(255,184,28,0.05);
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .marquee-edit-title{ font-family: var(--font-display); font-weight:600; font-size:12px; color: var(--gold); text-transform:uppercase; letter-spacing:0.05em; }
+  .marquee-edit-title span{ color: var(--grey); text-transform:none; letter-spacing:normal; font-weight:400; font-size:11px; }
+  .mq-row{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+  .mq-row.mq-col{ flex-direction:column; align-items:stretch; }
+  .mq-label{ width:100%; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color: var(--grey); }
+  .mq-row textarea, .mq-row input[type=text], .mq-row input[type=datetime-local]{ width:100%; font-size:12px; }
+  .mq-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .mq-btn{
+    display:inline-block; background: var(--panel); border:1px solid var(--line); color: var(--white);
+    font-family: var(--font-display); font-weight:600; font-size:10px; text-transform:uppercase;
+    letter-spacing:0.03em; padding:6px 12px; border-radius:3px; cursor:pointer;
+  }
+  .mq-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .mq-btn:disabled{ opacity:0.5; cursor:default; }
+  .mq-btn-ghost{ background:transparent; color: var(--grey); }
+  .mq-hint{ font-size:10px; color: var(--grey); line-height:1.4; }
   .marquee-info{
     flex:0 0 100%;
     padding-top:10px;
@@ -1747,7 +1801,8 @@
       <div class="masthead-actions">
         <button class="btn btn-primary" id="finishBtn">Finish season &amp; crown champion</button>
         <button class="btn btn-ghost" id="adminToggleBtn">🔒 Admin</button>
-        <button class="btn btn-ghost" id="resetBtn">Reset all data</button>
+        <button class="btn btn-ghost" id="marqueeEditBtn" style="display:none;">✏️ Edit marquee</button>
+        <button class="btn btn-ghost" id="resetBtn" style="display:none;">Reset all data</button>
       </div>
       <img id="collegeBadgeImg" class="badge-crest" width="66" height="66" alt="College Football">
     </div>
@@ -1932,6 +1987,11 @@ let activePlayerFilter = 'all';
 let expandedPlayerId = null;
 let isAdmin = (localStorage.getItem('loungeIsAdmin') === 'true');
 let pendingPlayers = [];
+let marqueeEditMode = false;
+let marqueeDrafts = { nfl: {}, college: {} };
+const mqRawCache = {};
+const mqValid = {};
+const MQ_IMG_RE = /^data:image\/(?:png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+$/;
 let expandedCollegeHistoryWeek = null;
 let expandedNflHistoryWeek = null;
 
@@ -1998,6 +2058,8 @@ function toggleAdmin(){
     if(isAdmin){
       isAdmin = false;
       localStorage.removeItem('loungeIsAdmin');
+      marqueeEditMode = false;
+      marqueeDrafts = { nfl: {}, college: {} };
       render();
       return;
     }
@@ -2264,7 +2326,7 @@ function attachListeners(){
     (err) => showBanner('NFL Pick 6 picks sync error: ' + err.message, 'error')
   );
   db.ref('marqueeGames').on('value',
-    (snap) => { marqueeGames = snap.val() || { nfl: null, college: null }; renderCountdowns(); },
+    (snap) => { marqueeGames = snap.val() || { nfl: null, college: null }; renderCountdowns(true); },
     (err) => showBanner('Marquee games sync error: ' + err.message, 'error')
   );
   db.ref('nflSlate').on('value',
@@ -3190,11 +3252,220 @@ function liveStatusHtml(live){
   return `<div class="live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span> <span class="live-score">${scoreText}</span>${live.statusDetail ? ` <span class="live-detail">${escapeHtml(live.statusDetail)}</span>` : ''}</div>`;
 }
 
-function marqueeArtHtml(item){
-  const info = item && item.info;
-  if(!info || !info.abbrA || !info.abbrB) return '';
+function fileToDataUri(file, opts){
+  return new Promise((resolve, reject) => {
+    if(!file || !/^image\//.test(file.type)){ reject(new Error('Please choose an image file.')); return; }
+    if(file.size > 12 * 1024 * 1024){ reject(new Error('That image is over 12 MB \u2014 pick a smaller one.')); return; }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.onload = (evt) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That file could not be opened as an image.'));
+      img.onload = () => {
+        const scale = Math.min(1, opts.maxW / img.width, opts.maxH / img.height);
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if(opts.mime === 'image/jpeg'){ ctx.fillStyle = '#101214'; ctx.fillRect(0, 0, w, h); }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL(opts.mime, opts.quality));
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// The strip redraws every second, so uploaded images live in CSS variables that are
+// set once when the data changes -- never repeated inside the redrawn markup.
+function syncMarqueeImageVars(){
+  ['nfl', 'college'].forEach(slot => {
+    const custom = (marqueeGames && marqueeGames[slot] && marqueeGames[slot].custom) || {};
+    ['logoA', 'logoB', 'image'].forEach(field => {
+      const name = `--mq-${slot}-${field}`;
+      const raw = typeof custom[field] === 'string' ? custom[field] : '';
+      if(mqRawCache[name] === raw) return;
+      mqRawCache[name] = raw;
+      const ok = !!raw && MQ_IMG_RE.test(raw);
+      mqValid[name] = ok;
+      if(ok) document.documentElement.style.setProperty(name, `url("${raw}")`);
+      else document.documentElement.style.removeProperty(name);
+    });
+  });
+}
+
+function mqHas(slot, field){ return !!mqValid[`--mq-${slot}-${field}`]; }
+
+function marqueeArtHtml(slot, item, editing){
+  const info = item.info || {};
+  const side = (logoKey, abbr, placeholder) => {
+    if(mqHas(slot, logoKey)) return `<div class="matchup-badge has-logo" style="background-image:var(--mq-${slot}-${logoKey})"></div>`;
+    if(abbr) return `<div class="matchup-badge">${escapeHtml(abbr)}</div>`;
+    return editing ? `<div class="matchup-badge placeholder">${placeholder}</div>` : '';
+  };
+  const a = side('logoA', info.abbrA, 'A');
+  const b = side('logoB', info.abbrB, 'B');
+  if(!a || !b) return '';
   const connector = /\s@\s/.test(item.matchup || '') ? '@' : 'vs';
-  return `<div class="matchup-art"><div class="matchup-badge">${escapeHtml(info.abbrA)}</div><div class="matchup-vs">${connector}</div><div class="matchup-badge">${escapeHtml(info.abbrB)}</div></div>`;
+  return `<div class="matchup-art">${a}<div class="matchup-vs">${connector}</div>${b}</div>`;
+}
+
+function marqueeSideHtml(slot, item, editing){
+  const custom = item.custom || {};
+  const hasImg = mqHas(slot, 'image');
+  const hasText = typeof custom.text === 'string' && custom.text.trim() !== '';
+  if(!hasImg && !hasText && !editing) return '';
+  const img = hasImg
+    ? `<div class="marquee-custom-image" style="background-image:var(--mq-${slot}-image)"></div>`
+    : (editing ? `<div class="marquee-custom-image placeholder">IMAGE</div>` : '');
+  const txt = hasText
+    ? `<div class="marquee-custom-text">${escapeHtml(custom.text)}</div>`
+    : (editing ? `<div class="marquee-custom-text placeholder">TEXT</div>` : '');
+  return `<div class="marquee-side">${img}${txt}</div>`;
+}
+
+function marqueeEditHtml(slot, item){
+  const custom = item.custom || {};
+  const d = marqueeDrafts[slot] || {};
+  const textVal = d.text !== undefined ? d.text : (custom.text || '');
+  const label = slot === 'nfl' ? 'NFL' : 'college';
+  return `
+    <div class="marquee-edit">
+      <div class="marquee-edit-title">Editing the ${label} card <span>(admin only \u2014 nobody else sees this)</span></div>
+      <div class="mq-row"><span class="mq-label">Team badges</span>
+        <label class="mq-btn">Team A logo<input type="file" accept="image/*" hidden data-mq-upload="${slot}:logoA"></label>
+        <label class="mq-btn">Team B logo<input type="file" accept="image/*" hidden data-mq-upload="${slot}:logoB"></label>
+        ${mqHas(slot, 'logoA') || mqHas(slot, 'logoB') ? `<button class="mq-btn mq-btn-ghost" data-mq-clear="${slot}:logos">Remove logos</button>` : ''}
+      </div>
+      <div class="mq-row"><span class="mq-label">Image</span>
+        <label class="mq-btn">${mqHas(slot, 'image') ? 'Replace image' : 'Upload image'}<input type="file" accept="image/*" hidden data-mq-upload="${slot}:image"></label>
+        ${mqHas(slot, 'image') ? `<button class="mq-btn mq-btn-ghost" data-mq-clear="${slot}:image">Remove image</button>` : ''}
+      </div>
+      <div class="mq-row mq-col"><span class="mq-label">Text</span>
+        <textarea rows="3" maxlength="600" placeholder="Anything you want to say about this game\u2026" data-mq-text="${slot}">${escapeHtml(textVal)}</textarea>
+        <div class="mq-actions"><button class="mq-btn" data-mq-save-text="${slot}">Save text</button></div>
+      </div>
+      <div class="mq-row mq-col"><span class="mq-label">Pick the game yourself</span>
+        <input type="text" placeholder="Team A @ Team B" maxlength="80" value="${escapeAttr(d.matchup || '')}" data-mq-matchup="${slot}">
+        <input type="datetime-local" value="${escapeAttr(d.kickoff || '')}" data-mq-kickoff="${slot}">
+        <div class="mq-actions">
+          <button class="mq-btn" data-mq-set-game="${slot}">Use this game</button>
+          <button class="mq-btn mq-btn-ghost" data-mq-auto="${slot}">Let the AI pick</button>
+        </div>
+        <div class="mq-hint">A game you pick stays until it's over, then automatic picking takes over again. Either choice clears this card's image and text.</div>
+      </div>
+    </div>`;
+}
+
+async function marqueeDbSet(path, value){
+  if(!isAdmin) return;
+  if(!firebaseReady){ await confirmModal('Not connected', 'Not connected to the database yet \u2014 try again in a moment.', 'OK'); return; }
+  try{
+    if(value === null) await db.ref(path).remove();
+    else await db.ref(path).set(value);
+  }catch(e){
+    showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error');
+  }
+}
+
+async function handleMarqueeUpload(slot, field, file){
+  if(!isAdmin || !file || !(marqueeGames && marqueeGames[slot])) return;
+  const isLogo = field === 'logoA' || field === 'logoB';
+  try{
+    const dataUri = await fileToDataUri(file, isLogo
+      ? { maxW: 160, maxH: 160, mime: 'image/png' }
+      : { maxW: 800, maxH: 800, mime: 'image/jpeg', quality: 0.8 });
+    if(dataUri.length > 700000) throw new Error('That image is still too large after shrinking \u2014 try a simpler one.');
+    await marqueeDbSet(`marqueeGames/${slot}/custom/${field}`, dataUri);
+  }catch(err){
+    await confirmModal('Upload failed', (err && err.message) || 'Something went wrong with that image.', 'OK');
+  }
+}
+
+async function setManualMarquee(slot, matchup, localDateTime){
+  if(!isAdmin) return;
+  const m = (matchup || '').trim();
+  const label = slot === 'nfl' ? 'NFL' : 'college';
+  if(!m){ await confirmModal('Enter the matchup', 'Type the game like \u201cTeam A @ Team B\u201d first.', 'OK'); return; }
+  const t = localDateTime ? new Date(localDateTime).getTime() : NaN;
+  if(isNaN(t)){ await confirmModal('Pick a kickoff time', 'Choose the date and time the game kicks off.', 'OK'); return; }
+  const ok = await confirmModal('Use this game?', `This replaces the ${label} marquee game with \u201c${m}\u201d and clears that card's image and text. It stays up until the game is over, then automatic picking takes over again.`, 'Use this game');
+  if(!ok) return;
+  await marqueeDbSet(`marqueeGames/${slot}`, { matchup: m, kickoffISO: new Date(t).toISOString(), manual: true, manualSetAt: Date.now() });
+  marqueeDrafts[slot] = {};
+}
+
+async function autoPickMarquee(slot, btn){
+  if(!isAdmin) return;
+  const label = slot === 'nfl' ? 'NFL' : 'college';
+  const ok = await confirmModal('Let the AI pick?', `This replaces the ${label} marquee game with the AI's pick and clears that card's image and text. It can take up to half a minute.`, 'Let the AI pick');
+  if(!ok) return;
+  const oldLabel = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Finding a game\u2026'; }
+  try{
+    const res = await fetch(`${AI_WORKER_URL}/trigger/marquee?secret=${encodeURIComponent(AI_APP_SECRET)}&slot=${slot}&force=1`);
+    if(!res.ok){
+      const body = await res.text();
+      throw new Error(`The Worker answered ${res.status}: ${body.slice(0, 200)}`);
+    }
+  }catch(err){
+    await confirmModal('Couldn\'t refresh', ((err && err.message) || 'Unknown error') + ' \u2014 make sure the latest Worker is deployed.', 'OK');
+    if(btn){ btn.disabled = false; btn.textContent = oldLabel; }
+  }
+}
+
+function wireMarqueeEdit(strip){
+  strip.querySelectorAll('input[data-mq-upload]').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const parts = inp.dataset.mqUpload.split(':');
+      const file = inp.files && inp.files[0];
+      inp.value = '';
+      await handleMarqueeUpload(parts[0], parts[1], file);
+    });
+  });
+  strip.querySelectorAll('[data-mq-clear]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const parts = btn.dataset.mqClear.split(':');
+      if(parts[1] === 'logos'){
+        await marqueeDbSet(`marqueeGames/${parts[0]}/custom/logoA`, null);
+        await marqueeDbSet(`marqueeGames/${parts[0]}/custom/logoB`, null);
+      } else {
+        await marqueeDbSet(`marqueeGames/${parts[0]}/custom/${parts[1]}`, null);
+      }
+    });
+  });
+  strip.querySelectorAll('textarea[data-mq-text]').forEach(ta => {
+    ta.addEventListener('input', () => { marqueeDrafts[ta.dataset.mqText].text = ta.value; });
+  });
+  strip.querySelectorAll('input[data-mq-matchup]').forEach(inp => {
+    inp.addEventListener('input', () => { marqueeDrafts[inp.dataset.mqMatchup].matchup = inp.value; });
+  });
+  strip.querySelectorAll('input[data-mq-kickoff]').forEach(inp => {
+    inp.addEventListener('input', () => { marqueeDrafts[inp.dataset.mqKickoff].kickoff = inp.value; });
+  });
+  strip.querySelectorAll('[data-mq-save-text]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const slot = btn.dataset.mqSaveText;
+      const ta = strip.querySelector(`textarea[data-mq-text="${slot}"]`);
+      const text = ta ? ta.value.trim() : '';
+      await marqueeDbSet(`marqueeGames/${slot}/custom/text`, text || null);
+      delete marqueeDrafts[slot].text;
+      renderCountdowns(true);
+    });
+  });
+  strip.querySelectorAll('[data-mq-set-game]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const slot = btn.dataset.mqSetGame;
+      const m = strip.querySelector(`input[data-mq-matchup="${slot}"]`);
+      const k = strip.querySelector(`input[data-mq-kickoff="${slot}"]`);
+      setManualMarquee(slot, m ? m.value : '', k ? k.value : '');
+    });
+  });
+  strip.querySelectorAll('[data-mq-auto]').forEach(btn => {
+    btn.addEventListener('click', () => autoPickMarquee(btn.dataset.mqAuto, btn));
+  });
 }
 
 function marqueeInfoHtml(item){
@@ -3209,19 +3480,28 @@ function marqueeInfoHtml(item){
   </div>`;
 }
 
-function renderCountdowns(){
+function renderCountdowns(force){
   const strip = $('countdownStrip');
   if(!strip) return;
+  if(marqueeEditMode && !isAdmin) marqueeEditMode = false;
+  if(marqueeEditMode && !force) return; // hold still while the admin is typing or uploading
   const nfl = marqueeGames && marqueeGames.nfl;
   const college = marqueeGames && marqueeGames.college;
   if(!nfl && !college){
     strip.innerHTML = `<div class="countdown-empty">Marquee matchup countdowns will appear here once generated.</div>`;
     return;
   }
+  syncMarqueeImageVars();
+  const editing = marqueeEditMode;
+  const sideNfl = nfl ? marqueeSideHtml('nfl', nfl, editing) : '';
+  const sideCollege = college ? marqueeSideHtml('college', college, editing) : '';
   strip.innerHTML = `
     ${nfl ? `
       <div class="countdown-item">
-        ${marqueeArtHtml(nfl)}
+        ${marqueeArtHtml('nfl', nfl, editing)}
+        <div class="marquee-layout${sideNfl ? ' has-side' : ''}">
+          <div class="marquee-left">
+            <div class="marquee-top">
         <div class="countdown-icon-badge"><img src="${ICON_FOOTBALL}" width="46" height="46" style="border-radius:6px; object-fit:cover;"></div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
@@ -3232,12 +3512,20 @@ function renderCountdowns(){
             <button class="countdown-cta countdown-cta-nfl-outline" id="viewAllGamesBtn">View all games →</button>
           </div>
         </div>
-        ${marqueeInfoHtml(nfl)}
+            </div>
+            ${marqueeInfoHtml(nfl)}
+          </div>
+          ${sideNfl}
+        </div>
+        ${editing ? marqueeEditHtml('nfl', nfl) : ''}
       </div>
     ` : ''}
     ${college ? `
       <div class="countdown-item countdown-college">
-        ${marqueeArtHtml(college)}
+        ${marqueeArtHtml('college', college, editing)}
+        <div class="marquee-layout${sideCollege ? ' has-side' : ''}">
+          <div class="marquee-left">
+            <div class="marquee-top">
         <div class="countdown-icon-badge countdown-icon-badge-college"><img src="${ICON_COLLEGE_BADGE}" width="46" height="46" style="border-radius:6px; object-fit:cover;"></div>
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
@@ -3245,7 +3533,12 @@ function renderCountdowns(){
           ${college.live && college.live.status !== 'scheduled' && !isKickoffInFuture(college.kickoffISO) ? liveStatusHtml(college.live) : `<div class="countdown-time">${formatCountdown(college.kickoffISO)}</div>`}
           <button class="countdown-cta countdown-cta-college" data-target="collegeWrap">View College Pick 6 →</button>
         </div>
-        ${marqueeInfoHtml(college)}
+            </div>
+            ${marqueeInfoHtml(college)}
+          </div>
+          ${sideCollege}
+        </div>
+        ${editing ? marqueeEditHtml('college', college) : ''}
       </div>
     ` : ''}
   `;
@@ -3257,6 +3550,7 @@ function renderCountdowns(){
   });
   const viewAllBtn = $('viewAllGamesBtn');
   if(viewAllBtn) viewAllBtn.addEventListener('click', showNflScheduleModal);
+  if(editing) wireMarqueeEdit(strip);
 }
 
 function renderPlayerOptions(){
@@ -3712,9 +4006,10 @@ function renderTrophyBanner(){
       <div class="trophy-name">${escapeHtml(names)}</div>
       <div class="trophy-meta">${metaText} ${dateStr ? '&middot; Crowned ' + dateStr : ''}</div>
     </div>
-    <button class="btn btn-ghost btn-small" id="reopenBtn">Reopen season</button>
+    ${isAdmin ? '<button class="btn btn-ghost btn-small" id="reopenBtn">Reopen season</button>' : ''}
   `;
-  $('reopenBtn').addEventListener('click', async () => {
+  if($('reopenBtn')) $('reopenBtn').addEventListener('click', async () => {
+    if(!isAdmin) return;
     const ok = await confirmModal('Reopen season', 'This unlocks editing again and removes the champion banner. Continue?', 'Reopen');
     if(!ok) return;
     season = { finished:false, winnerIds:[], finishedAt:null };
@@ -3726,7 +4021,7 @@ function renderTrophyBanner(){
 function applyLockState(){
   $('addFormSection').classList.toggle('locked-section', season.finished);
   $('aiFormSection').classList.toggle('locked-section', season.finished);
-  $('finishBtn').style.display = season.finished ? 'none' : 'inline-block';
+  $('finishBtn').style.display = (season.finished || !isAdmin) ? 'none' : 'inline-block';
   document.querySelectorAll('.pred-table-wrap input, .pred-table-wrap select, .pred-table-wrap .row-remove, .pred-table-wrap .comment-post-btn')
     .forEach(el => {
       const forceDisabled = el.dataset.general === 'true';
@@ -3740,9 +4035,18 @@ function applyLockState(){
     adminBtn.textContent = isAdmin ? '🔓 Admin' : '🔒 Admin';
     adminBtn.classList.toggle('admin-unlocked', isAdmin);
   }
+  const editBtn = $('marqueeEditBtn');
+  if(editBtn){
+    editBtn.style.display = isAdmin ? '' : 'none';
+    editBtn.textContent = marqueeEditMode ? '\u2705 Done editing' : '\u270F\uFE0F Edit marquee';
+    editBtn.classList.toggle('admin-unlocked', marqueeEditMode);
+  }
+  const resetBtn = $('resetBtn');
+  if(resetBtn) resetBtn.style.display = isAdmin ? '' : 'none';
 }
 
 $('finishBtn').addEventListener('click', async () => {
+  if(!isAdmin) return; // admin only
   if(players.length === 0){ await confirmModal('Can\'t finish yet', 'Add players and predictions before finishing the season.', 'OK'); return; }
   const { top, winners } = getChampions(getLeaderboardRows());
   if(!top){
@@ -4031,6 +4335,7 @@ $('filterPlayer').addEventListener('change', (e) => {
 $('filterWeek').addEventListener('change', renderPredictions);
 
 $('resetBtn').addEventListener('click', async () => {
+  if(!isAdmin) return; // admin only
   const ok = await confirmModal('Reset all data', 'This clears all players and predictions for the whole group. This can\'t be undone. Continue?', 'Reset everything');
   if(!ok) return;
   players = [];
@@ -4041,6 +4346,13 @@ $('resetBtn').addEventListener('click', async () => {
 });
 
 $('adminToggleBtn').addEventListener('click', toggleAdmin);
+$('marqueeEditBtn').addEventListener('click', () => {
+  if(!isAdmin) return;
+  marqueeEditMode = !marqueeEditMode;
+  if(!marqueeEditMode) marqueeDrafts = { nfl: {}, college: {} };
+  applyLockState();
+  renderCountdowns(true);
+});
 
 if(initFirebase()){
   attachListeners();
