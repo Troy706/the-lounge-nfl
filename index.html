@@ -158,6 +158,10 @@
   .mq-btn:disabled{ opacity:0.5; cursor:default; }
   .mq-btn-ghost{ background:transparent; color: var(--grey); }
   .mq-hint{ font-size:10px; color: var(--grey); line-height:1.4; }
+  .mq-fact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  @media (max-width: 760px){ .mq-fact-grid{ grid-template-columns:1fr; } }
+  .mq-fact-field{ display:flex; flex-direction:column; gap:3px; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color: var(--grey); }
+  .mq-fact-field input{ text-transform:none; letter-spacing:normal; }
   .marquee-info{
     flex:0 0 100%;
     padding-top:10px;
@@ -3328,12 +3332,36 @@ function marqueeSideHtml(slot, item, editing){
 
 function marqueeEditHtml(slot, item){
   const custom = item.custom || {};
+  const info = item.info || {};
   const d = marqueeDrafts[slot] || {};
+  const df = d.facts || {};
+  const fact = (f) => String(df[f] !== undefined ? df[f] : (info[f] || ''));
   const textVal = d.text !== undefined ? d.text : (custom.text || '');
   const label = slot === 'nfl' ? 'NFL' : 'college';
+  const factInput = (f, name, placeholder, max) =>
+    `<label class="mq-fact-field">${name}<input type="text" maxlength="${max}" placeholder="${placeholder}" value="${escapeAttr(fact(f))}" data-mq-fact="${slot}:${f}"></label>`;
   return `
     <div class="marquee-edit">
       <div class="marquee-edit-title">Editing the ${label} card <span>(admin only \u2014 nobody else sees this)</span></div>
+      <div class="mq-row mq-col"><span class="mq-label">Pick the game yourself</span>
+        <input type="text" placeholder="Team A @ Team B" maxlength="80" value="${escapeAttr(d.matchup || '')}" data-mq-matchup="${slot}">
+        <input type="datetime-local" value="${escapeAttr(d.kickoff || '')}" data-mq-kickoff="${slot}">
+        <div class="mq-actions">
+          <button class="mq-btn" data-mq-set-game="${slot}">Use this game</button>
+          <button class="mq-btn mq-btn-ghost" data-mq-auto="${slot}">Let the AI pick</button>
+        </div>
+        <div class="mq-hint">A game you pick stays until it's over, then automatic picking takes over again. Picking a game clears this card's facts, image and text, so set the game first and fill in the rest after.</div>
+      </div>
+      <div class="mq-row mq-col"><span class="mq-label">Game facts</span>
+        <div class="mq-fact-grid">
+          ${factInput('records', 'Records', 'BUF 3-1 / LAR 2-2', 70)}
+          ${slot === 'college' ? factInput('ranks', 'Rankings', 'No. 5 Ohio State / No. 14 Iowa', 80) : ''}
+          ${factInput('tv', 'TV', 'ESPN/ABC', 40)}
+          ${factInput('venue', 'Venue', 'SoFi Stadium, Inglewood', 90)}
+        </div>
+        <div class="mq-actions"><button class="mq-btn" data-mq-save-facts="${slot}">Save facts</button></div>
+        <div class="mq-hint">Leave a box empty to hide that line. Saving marks the facts as yours, so the \u201ccompiled by AI\u201d note goes away.</div>
+      </div>
       <div class="mq-row"><span class="mq-label">Team badges</span>
         <label class="mq-btn">Team A logo<input type="file" accept="image/*" hidden data-mq-upload="${slot}:logoA"></label>
         <label class="mq-btn">Team B logo<input type="file" accept="image/*" hidden data-mq-upload="${slot}:logoB"></label>
@@ -3347,15 +3375,6 @@ function marqueeEditHtml(slot, item){
         <textarea rows="3" maxlength="600" placeholder="Anything you want to say about this game\u2026" data-mq-text="${slot}">${escapeHtml(textVal)}</textarea>
         <div class="mq-actions"><button class="mq-btn" data-mq-save-text="${slot}">Save text</button></div>
       </div>
-      <div class="mq-row mq-col"><span class="mq-label">Pick the game yourself</span>
-        <input type="text" placeholder="Team A @ Team B" maxlength="80" value="${escapeAttr(d.matchup || '')}" data-mq-matchup="${slot}">
-        <input type="datetime-local" value="${escapeAttr(d.kickoff || '')}" data-mq-kickoff="${slot}">
-        <div class="mq-actions">
-          <button class="mq-btn" data-mq-set-game="${slot}">Use this game</button>
-          <button class="mq-btn mq-btn-ghost" data-mq-auto="${slot}">Let the AI pick</button>
-        </div>
-        <div class="mq-hint">A game you pick stays until it's over, then automatic picking takes over again. Either choice clears this card's image and text.</div>
-      </div>
     </div>`;
 }
 
@@ -3368,6 +3387,29 @@ async function marqueeDbSet(path, value){
   }catch(e){
     showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error');
   }
+}
+
+async function marqueeDbUpdate(path, obj){
+  if(!isAdmin) return;
+  if(!firebaseReady){ await confirmModal('Not connected', 'Not connected to the database yet \u2014 try again in a moment.', 'OK'); return; }
+  try{
+    await db.ref(path).update(obj);
+  }catch(e){
+    showBanner('Save failed: ' + (e && e.message ? e.message : 'unknown error'), 'error');
+  }
+}
+
+async function saveMarqueeFacts(slot, values){
+  if(!isAdmin || !(marqueeGames && marqueeGames[slot])) return;
+  const limits = { records: 70, ranks: 80, tv: 40, venue: 90 };
+  const fields = slot === 'college' ? ['records', 'ranks', 'tv', 'venue'] : ['records', 'tv', 'venue'];
+  const update = { source: 'admin' };
+  fields.forEach(f => {
+    const v = String(values && values[f] != null ? values[f] : '').replace(/\s+/g, ' ').trim().slice(0, limits[f]);
+    update[f] = v || null; // null deletes the line
+  });
+  await marqueeDbUpdate(`marqueeGames/${slot}/info`, update);
+  if(marqueeDrafts[slot]) delete marqueeDrafts[slot].facts;
 }
 
 async function handleMarqueeUpload(slot, field, file){
@@ -3391,7 +3433,7 @@ async function setManualMarquee(slot, matchup, localDateTime){
   if(!m){ await confirmModal('Enter the matchup', 'Type the game like \u201cTeam A @ Team B\u201d first.', 'OK'); return; }
   const t = localDateTime ? new Date(localDateTime).getTime() : NaN;
   if(isNaN(t)){ await confirmModal('Pick a kickoff time', 'Choose the date and time the game kicks off.', 'OK'); return; }
-  const ok = await confirmModal('Use this game?', `This replaces the ${label} marquee game with \u201c${m}\u201d and clears that card's image and text. It stays up until the game is over, then automatic picking takes over again.`, 'Use this game');
+  const ok = await confirmModal('Use this game?', `This replaces the ${label} marquee game with \u201c${m}\u201d and clears that card's facts, image and text. It stays up until the game is over, then automatic picking takes over again.`, 'Use this game');
   if(!ok) return;
   await marqueeDbSet(`marqueeGames/${slot}`, { matchup: m, kickoffISO: new Date(t).toISOString(), manual: true, manualSetAt: Date.now() });
   marqueeDrafts[slot] = {};
@@ -3455,6 +3497,25 @@ function wireMarqueeEdit(strip){
       renderCountdowns(true);
     });
   });
+  strip.querySelectorAll('input[data-mq-fact]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const parts = inp.dataset.mqFact.split(':');
+      const d = marqueeDrafts[parts[0]];
+      d.facts = d.facts || {};
+      d.facts[parts[1]] = inp.value;
+    });
+  });
+  strip.querySelectorAll('[data-mq-save-facts]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const slot = btn.dataset.mqSaveFacts;
+      const values = {};
+      strip.querySelectorAll(`input[data-mq-fact^="${slot}:"]`).forEach(inp => {
+        values[inp.dataset.mqFact.split(':')[1]] = inp.value;
+      });
+      await saveMarqueeFacts(slot, values);
+      renderCountdowns(true);
+    });
+  });
   strip.querySelectorAll('[data-mq-set-game]').forEach(btn => {
     btn.addEventListener('click', () => {
       const slot = btn.dataset.mqSetGame;
@@ -3476,7 +3537,7 @@ function marqueeInfoHtml(item){
   return `<div class="marquee-info">
     ${facts.map(f => `<div class="marquee-fact"><span class="marquee-fact-label">${f[0]}</span><span class="marquee-fact-value">${escapeHtml(f[1])}</span></div>`).join('')}
     ${info.note ? `<div class="marquee-note">${escapeHtml(info.note)}</div>` : ''}
-    <div class="marquee-info-source">Facts only, compiled by AI from web sources when this game was set \u2014 double-check anything that matters.</div>
+    ${info.source === 'admin' ? '' : '<div class="marquee-info-source">Facts only, compiled by AI from web sources when this game was set \u2014 double-check anything that matters.</div>'}
   </div>`;
 }
 
