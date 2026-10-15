@@ -822,6 +822,13 @@
     flex-shrink:0;
   }
   .pick-verify-btn:hover{ background: rgba(255,184,28,0.28); }
+  .pick-clear-btn{
+    flex-shrink:0; width:22px; height:22px; padding:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid var(--line); border-radius:50%;
+    color: var(--grey); font-size:11px; line-height:1; cursor:pointer;
+  }
+  .pick-clear-btn:hover{ border-color: var(--red); color: var(--red); }
   .pick-unverified-hint{ font-size:9px; color: var(--grey); font-style:italic; flex-shrink:0; }
   .stats-empty{ font-size:12px; color: var(--grey); }
 
@@ -2802,6 +2809,41 @@ async function setNflPick6Pick(weekKey, gameId, playerId, pickedTeam){
   renderNflPick6();
 }
 
+// A game is locked once it has a winner, has kicked off, or is live (per the score feed,
+// unless our own kickoff time says it hasn't started). Used by the pick buttons and by Remove.
+function isGameLocked(game){
+  const winnerSet = !!(game.winner && game.winner !== 'pending');
+  const t = game.kickoffISO ? new Date(game.kickoffISO).getTime() : NaN;
+  const kickoffPassed = !isNaN(t) && t <= Date.now();
+  const kickoffInFuture = !isNaN(t) && t > Date.now();
+  return winnerSet || kickoffPassed || !!(game.live && game.live.status === 'in_progress' && !kickoffInFuture);
+}
+
+// Anyone can take back an UNVERIFIED pick on a game that hasn't started (it isn't counting
+// anyway, and anyone could already overwrite it). Verified picks and locked games: admin only.
+async function clearPick(kind, gameId, playerId){
+  const isNfl = kind === 'nfl';
+  const arr = isNfl ? nflPick6Picks : collegePicks;
+  const pick = arr.find(p => p.gameId === gameId && p.playerId === playerId);
+  if(!pick) return;
+  const slate = (isNfl ? nflPick6Slates : collegeSlates).find(s => (s.games || []).some(g => g.id === gameId));
+  const game = slate && slate.games.find(g => g.id === gameId);
+  const verified = isPickVerified(pick);
+  const locked = game ? isGameLocked(game) : true;
+  if(!isAdmin && (verified || locked)) return;
+  const player = players.find(p => p.id === playerId);
+  const who = player ? player.name : 'this player';
+  const msg = verified
+    ? `${who}'s verified pick (${pick.pickedTeam}) counts toward their score. Remove it anyway?`
+    : `Remove ${who}'s pick (${pick.pickedTeam}) for this game? It hasn't been verified, so it isn't counting.`;
+  const ok = await confirmModal('Remove this pick?', msg, 'Remove pick');
+  if(!ok) return;
+  if(isNfl) nflPick6Picks = nflPick6Picks.filter(p => p !== pick);
+  else collegePicks = collegePicks.filter(p => p !== pick);
+  await (isNfl ? saveNflPick6Picks() : saveCollegePicks());
+  render();
+}
+
 async function verifyPickWithPin(picksArr, saveFn, renderFn, gameId, playerId){
   const player = players.find(p => p.id === playerId);
   if(!player) return;
@@ -2940,7 +2982,7 @@ function renderCollegePick6(){
     const winnerSet = game.winner && game.winner !== 'pending';
     const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
     const kickoffInFuture = game.kickoffISO && new Date(game.kickoffISO).getTime() > Date.now();
-    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress' && !kickoffInFuture);
+    const locked = isGameLocked(game);
     return `
       <div class="college-game-card">
         <div class="college-game-header">
@@ -2958,6 +3000,7 @@ function renderCollegePick6(){
             const pick = collegePicks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
             const picked = pick ? pick.pickedTeam : null;
             const verified = pick ? isPickVerified(pick) : false;
+            const canClear = !!picked && (isAdmin || (!verified && !locked));
             const correct = winnerSet && picked && verified && picked === game.winner;
             const wrong = winnerSet && picked && verified && picked !== game.winner;
             const pc = getPlayerColor(p.id);
@@ -2968,6 +3011,7 @@ function renderCollegePick6(){
                   <button class="college-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
                   <button class="college-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
                   ${picked && !verified ? (p.pin ? `<button class="pick-verify-btn" data-collection="college" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : `<span class="pick-unverified-hint">\u26A0\uFE0F Set a PIN to count</span>`) : ''}
+                  ${canClear ? `<button class="pick-clear-btn" data-collection="college" data-game-id="${game.id}" data-player-id="${p.id}" title="Remove this pick">✕</button>` : ''}
                 </div>
               </div>
             `;
@@ -3000,6 +3044,9 @@ function renderCollegePick6(){
     btn.addEventListener('click', () => {
       verifyPickWithPin(collegePicks, saveCollegePicks, renderCollegePick6, btn.dataset.gameId, btn.dataset.playerId);
     });
+  });
+  wrap.querySelectorAll('.pick-clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => clearPick('college', btn.dataset.gameId, btn.dataset.playerId));
   });
 }
 
@@ -3037,7 +3084,7 @@ function renderNflPick6(){
     const winnerSet = game.winner && game.winner !== 'pending';
     const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
     const kickoffInFuture = game.kickoffISO && new Date(game.kickoffISO).getTime() > Date.now();
-    const locked = winnerSet || kickoffPassed || (game.live && game.live.status === 'in_progress' && !kickoffInFuture);
+    const locked = isGameLocked(game);
     return `
       <div class="college-game-card">
         <div class="college-game-header nfl6-header">
@@ -3055,6 +3102,7 @@ function renderNflPick6(){
             const pick = nflPick6Picks.find(pk => pk.gameId === game.id && pk.playerId === p.id);
             const picked = pick ? pick.pickedTeam : null;
             const verified = pick ? isPickVerified(pick) : false;
+            const canClear = !!picked && (isAdmin || (!verified && !locked));
             const correct = winnerSet && picked && verified && picked === game.winner;
             const wrong = winnerSet && picked && verified && picked !== game.winner;
             const pc = getPlayerColor(p.id);
@@ -3065,6 +3113,7 @@ function renderNflPick6(){
                   <button class="nfl6-pick-btn ${picked === game.teamA ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamA)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamA ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamA)}</button>
                   <button class="nfl6-pick-btn ${picked === game.teamB ? 'selected' : ''}" data-game-id="${game.id}" data-player-id="${p.id}" data-team="${escapeAttr(game.teamB)}" ${(locked || verified) ? 'disabled' : ''} ${picked === game.teamB ? `style="border-color:${pc.c}; background:${pc.bg}; color:#fff;"` : ''}>${escapeHtml(game.teamB)}</button>
                   ${picked && !verified ? (p.pin ? `<button class="pick-verify-btn" data-collection="nfl" data-game-id="${game.id}" data-player-id="${p.id}">\uD83D\uDD10 Verify</button>` : `<span class="pick-unverified-hint">\u26A0\uFE0F Set a PIN to count</span>`) : ''}
+                  ${canClear ? `<button class="pick-clear-btn" data-collection="nfl" data-game-id="${game.id}" data-player-id="${p.id}" title="Remove this pick">✕</button>` : ''}
                 </div>
               </div>
             `;
@@ -3097,6 +3146,9 @@ function renderNflPick6(){
     btn.addEventListener('click', () => {
       verifyPickWithPin(nflPick6Picks, saveNflPick6Picks, renderNflPick6, btn.dataset.gameId, btn.dataset.playerId);
     });
+  });
+  wrap.querySelectorAll('.pick-clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => clearPick('nfl', btn.dataset.gameId, btn.dataset.playerId));
   });
 }
 
