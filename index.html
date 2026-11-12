@@ -829,6 +829,9 @@
     color: var(--grey); font-size:11px; line-height:1; cursor:pointer;
   }
   .pick-clear-btn:hover{ border-color: var(--red); color: var(--red); }
+  .pick6-kick{ font-size:10px; color: var(--grey); white-space:nowrap; margin-left:auto; margin-right:6px; }
+  .pick-time-btn{ flex-shrink:0; background:transparent; border:1px solid var(--line); border-radius:4px; padding:2px 5px; font-size:11px; cursor:pointer; margin-right:6px; }
+  .pick-time-btn:hover{ border-color: var(--accent, #1fbf75); }
   .pick-unverified-hint{ font-size:9px; color: var(--grey); font-style:italic; flex-shrink:0; }
   .stats-empty{ font-size:12px; color: var(--grey); }
 
@@ -2031,6 +2034,55 @@ function showBanner(message, type){
 }
 $('statusBannerClose').addEventListener('click', () => { $('statusBanner').style.display = 'none'; });
 
+function localInputValue(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// Admin: correct a Pick 6 game's kickoff time (the AI occasionally stores a wrong one, which
+// locks picks too early or too late). Resolves to an ISO string, '' to clear, or null if cancelled.
+function kickoffModal(game){
+  return new Promise((resolve) => {
+    $('modalBox').innerHTML = `
+      <div class="modal-title">Set kickoff time</div>
+      <div class="modal-message">${escapeHtml(game.teamA)} vs ${escapeHtml(game.teamB)}. Picks lock at this time. Use your own local time.</div>
+      <div class="modal-field">
+        <label>Kickoff</label>
+        <input type="datetime-local" id="kickoffInput" value="${escapeAttr(game.kickoffISO ? localInputValue(game.kickoffISO) : '')}">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary btn-small" id="modalConfirm">Save</button>
+      </div>
+    `;
+    $('modalOverlay').style.display = 'flex';
+    $('modalCancel').addEventListener('click', () => { closeModal(); resolve(null); });
+    $('modalConfirm').addEventListener('click', () => {
+      const v = $('kickoffInput').value;
+      if(!v){ closeModal(); resolve(''); return; }
+      const d = new Date(v);
+      closeModal();
+      resolve(isNaN(d.getTime()) ? null : d.toISOString());
+    });
+  });
+}
+
+async function editPick6Kickoff(kind, gameId){
+  if(!isAdmin) return;
+  const isNfl = kind === 'nfl';
+  const slates = isNfl ? nflPick6Slates : collegeSlates;
+  const slate = slates.find(s => (s.games||[]).some(g => g.id === gameId));
+  const game = slate && slate.games.find(g => g.id === gameId);
+  if(!game) return;
+  const iso = await kickoffModal(game);
+  if(iso === null) return;
+  game.kickoffISO = iso || null;
+  await (isNfl ? saveNflPick6Slate(slate.weekKey, slate) : saveCollegeSlate(slate.weekKey, slate));
+  render();
+}
+
 function closeModal(){
   $('modalOverlay').style.display = 'none';
   $('modalBox').innerHTML = '';
@@ -2987,6 +3039,7 @@ function renderCollegePick6(){
       <div class="college-game-card">
         <div class="college-game-header">
           <span class="college-conf-tag">${escapeHtml(game.conference)}</span>
+          ${game.kickoffISO && !isNaN(new Date(game.kickoffISO).getTime()) ? `<span class="pick6-kick">${escapeHtml(formatKickoffLocal(game.kickoffISO))}</span>` : ''}${isAdmin ? `<button class="pick-time-btn" data-collection="college" data-game-id="${game.id}" title="Set kickoff time">\u23F0</button>` : ''}
           <select class="college-winner-select" data-game-id="${game.id}" ${isAdmin ? '' : 'disabled title="Admin only \u2014 this is not where you make your pick"'}>
             <option value="pending" ${!winnerSet ? 'selected' : ''}>Winner: Pending</option>
             <option value="${escapeAttr(game.teamA)}" ${game.winner === game.teamA ? 'selected' : ''}>${escapeHtml(game.teamA)} won</option>
@@ -3048,6 +3101,9 @@ function renderCollegePick6(){
   wrap.querySelectorAll('.pick-clear-btn').forEach(btn => {
     btn.addEventListener('click', () => clearPick('college', btn.dataset.gameId, btn.dataset.playerId));
   });
+  wrap.querySelectorAll('.pick-time-btn').forEach(btn => {
+    btn.addEventListener('click', () => editPick6Kickoff('college', btn.dataset.gameId));
+  });
 }
 
 function renderNflPick6(){
@@ -3089,6 +3145,7 @@ function renderNflPick6(){
       <div class="college-game-card">
         <div class="college-game-header nfl6-header">
           <span class="college-winner-select-spacer"></span>
+          ${game.kickoffISO && !isNaN(new Date(game.kickoffISO).getTime()) ? `<span class="pick6-kick">${escapeHtml(formatKickoffLocal(game.kickoffISO))}</span>` : ''}${isAdmin ? `<button class="pick-time-btn" data-collection="nfl" data-game-id="${game.id}" title="Set kickoff time">\u23F0</button>` : ''}
           <select class="nfl6-winner-select" data-game-id="${game.id}" ${isAdmin ? '' : 'disabled title="Admin only \u2014 this is not where you make your pick"'}>
             <option value="pending" ${!winnerSet ? 'selected' : ''}>Winner: Pending</option>
             <option value="${escapeAttr(game.teamA)}" ${game.winner === game.teamA ? 'selected' : ''}>${escapeHtml(game.teamA)} won</option>
@@ -3149,6 +3206,9 @@ function renderNflPick6(){
   });
   wrap.querySelectorAll('.pick-clear-btn').forEach(btn => {
     btn.addEventListener('click', () => clearPick('nfl', btn.dataset.gameId, btn.dataset.playerId));
+  });
+  wrap.querySelectorAll('.pick-time-btn').forEach(btn => {
+    btn.addEventListener('click', () => editPick6Kickoff('nfl', btn.dataset.gameId));
   });
 }
 
