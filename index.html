@@ -2868,7 +2868,7 @@ function isGameLocked(game){
   const t = game.kickoffISO ? new Date(game.kickoffISO).getTime() : NaN;
   const kickoffPassed = !isNaN(t) && t <= Date.now();
   const kickoffInFuture = !isNaN(t) && t > Date.now();
-  return winnerSet || kickoffPassed || !!(game.live && game.live.status === 'in_progress' && !kickoffInFuture);
+  return winnerSet || kickoffPassed;
 }
 
 // Anyone can take back an UNVERIFIED pick on a game that hasn't started (it isn't counting
@@ -2948,43 +2948,12 @@ async function setCollegePick(weekKey, gameId, playerId, pickedTeam){
 }
 
 function pick6LiveLineHtml(game){
+  // No live scores: just a status badge. A winner means FINAL; a passed kickoff means picks are locked.
   const winnerSet = game.winner && game.winner !== 'pending';
   const kickoffPassed = game.kickoffISO && new Date(game.kickoffISO).getTime() <= Date.now();
-  const kickoffInFuture = game.kickoffISO && new Date(game.kickoffISO).getTime() > Date.now();
-  // If we know for a fact kickoff hasn't happened yet, don't trust any "in
-  // progress" status or score the live checker attached to this game — that can
-  // only be a bad match on the free data feed's end (community-sourced data,
-  // wrong event, stale record, etc.), not a real update, since the game
-  // objectively can't have started. A manually-confirmed winner is still trusted,
-  // since that's a human telling us the truth, not a scraped feed guessing.
-  if(kickoffInFuture && !winnerSet){
-    return '';
-  }
-  if(!game.live || (game.live.status === 'scheduled' && !winnerSet)){
-    // No live score data to show, but if kickoff has passed we still owe people
-    // an explanation for why the picks are locked.
-    if(!winnerSet && kickoffPassed){
-      return `<div class="pick6-live-line"><span class="live-badge live-locked">\uD83D\uDD12 Kickoff passed</span></div>`;
-    }
-    return '';
-  }
-  // A winner being set (whether auto-graded or picked manually) always means the
-  // game is over, even if the last live-score check happened to catch it mid-play
-  // or hasn't run again since it wrapped up — don't trust a stale "LIVE" status.
-  if(game.live.status === 'final' || winnerSet){
-    // Only trust the score NUMBER if the live checker itself confirmed the game
-    // finished — if a winner was set some other way (manually, most likely) while
-    // the live data is still sitting on a stale in-progress snapshot, showing that
-    // old number labeled FINAL would be actively misleading. Show FINAL with no
-    // number rather than a number we can't vouch for.
-    if(game.live.completed){
-      const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
-      return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span><span class="live-score">${scoreText}</span></div>`;
-    }
-    return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span></div>`;
-  }
-  const scoreText = `${game.live.scoreA}\u2013${game.live.scoreB}`;
-  return `<div class="pick6-live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span><span class="live-score">${scoreText}</span>${game.live.statusDetail ? `<span class="live-detail">${escapeHtml(game.live.statusDetail)}</span>` : ''}</div>`;
+  if(winnerSet) return `<div class="pick6-live-line"><span class="live-badge live-final">FINAL</span></div>`;
+  if(kickoffPassed) return `<div class="pick6-live-line"><span class="live-badge live-locked">🔒 Kickoff passed</span></div>`;
+  return '';
 }
 
 function aiPickRowHtml(gameId, winner, winnerSet){
@@ -3242,7 +3211,7 @@ function renderPick6History(containerId, slates, picksArr, currentWeekKey, expan
     const isOpen = expandedWeekGetter() === slate.weekKey;
     const gamesHtml = (slate.games || []).map(game => {
       const winnerSet = game.winner && game.winner !== 'pending';
-      const resultText = winnerSet ? `${escapeHtml(game.winner)} won${game.live && game.live.completed ? ` \u00b7 ${game.live.scoreA}\u2013${game.live.scoreB}` : ''}` : 'Not yet decided';
+      const resultText = winnerSet ? `${escapeHtml(game.winner)} won` : 'Not yet decided';
       const picksHtml = humanPlayers.map(p => {
         const pick = collegePicks.concat(nflPick6Picks).find(pk => pk.gameId === game.id && pk.playerId === p.id);
         if(!pick) return '';
@@ -3413,15 +3382,6 @@ function formatCountdown(targetISO){
 
 function isKickoffInFuture(kickoffISO){
   return !!(kickoffISO && new Date(kickoffISO).getTime() > Date.now());
-}
-
-function liveStatusHtml(live){
-  if(!live || live.status === 'scheduled') return '';
-  const scoreText = `${live.scoreA}\u2013${live.scoreB}`;
-  if(live.status === 'final'){
-    return `<div class="live-line"><span class="live-badge live-final">FINAL</span> <span class="live-score">${scoreText}</span></div>`;
-  }
-  return `<div class="live-line"><span class="live-badge live-in-progress">\u25CF LIVE</span> <span class="live-score">${scoreText}</span>${live.statusDetail ? ` <span class="live-detail">${escapeHtml(live.statusDetail)}</span>` : ''}</div>`;
 }
 
 // The cards used to be rebuilt every second, which would restart a playing video (and wipe
@@ -3824,7 +3784,7 @@ function renderCountdowns(force){
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee NFL matchup</div>
           <div class="countdown-label">${escapeHtml(nfl.matchup)}</div>
-          ${nfl.live && nfl.live.status !== 'scheduled' && !isKickoffInFuture(nfl.kickoffISO) ? liveStatusHtml(nfl.live) : `<div class="countdown-time" data-kickoff="${escapeAttr(nfl.kickoffISO)}">${formatCountdown(nfl.kickoffISO)}</div>`}
+          <div class="countdown-time" data-kickoff="${escapeAttr(nfl.kickoffISO)}">${formatCountdown(nfl.kickoffISO)}</div>
           <div class="countdown-cta-row">
             <button class="countdown-cta countdown-cta-nfl" data-target="addFormSection">View all picks →</button>
             <button class="countdown-cta countdown-cta-nfl-outline" id="viewAllGamesBtn">View all games →</button>
@@ -3849,7 +3809,7 @@ function renderCountdowns(force){
         <div class="countdown-body">
           <div class="countdown-eyebrow">Marquee college matchup</div>
           <div class="countdown-label">${escapeHtml(college.matchup)}</div>
-          ${college.live && college.live.status !== 'scheduled' && !isKickoffInFuture(college.kickoffISO) ? liveStatusHtml(college.live) : `<div class="countdown-time" data-kickoff="${escapeAttr(college.kickoffISO)}">${formatCountdown(college.kickoffISO)}</div>`}
+          <div class="countdown-time" data-kickoff="${escapeAttr(college.kickoffISO)}">${formatCountdown(college.kickoffISO)}</div>
           <button class="countdown-cta countdown-cta-college" data-target="collegeWrap">View College Pick 6 →</button>
         </div>
             </div>
